@@ -1,0 +1,5 @@
+{
+  "name": "SkyIntel – Flight & Weather Intelligence Dashboard",
+  "description": "A real-time aviation dashboard displaying live aircraft positions combined with weather data and turbulence risk analysis.",
+  "requestFramePermissions": ["geolocation"]
+}

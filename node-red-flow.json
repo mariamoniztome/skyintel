@@ -1,0 +1,115 @@
+[
+    {
+        "id": "skyintel_ingest_flow",
+        "type": "tab",
+        "label": "SkyIntel Ingestion",
+        "disabled": false,
+        "info": "Flow to fetch flight and weather data, merge them, and send to SkyIntel Backend."
+    },
+    {
+        "id": "inject_timer",
+        "type": "inject",
+        "z": "skyintel_ingest_flow",
+        "name": "Every 30s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "30",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 120,
+        "wires": [
+            [
+                "fetch_flights"
+            ]
+        ]
+    },
+    {
+        "id": "fetch_flights",
+        "type": "http request",
+        "z": "skyintel_ingest_flow",
+        "name": "Fetch Live Flights",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://api.mockflights.com/live",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 330,
+        "y": 120,
+        "wires": [
+            [
+                "process_flights"
+            ]
+        ]
+    },
+    {
+        "id": "process_flights",
+        "type": "function",
+        "z": "skyintel_ingest_flow",
+        "name": "Merge Weather & Score",
+        "func": "// Mock logic for Node-RED processing\nconst flights = msg.payload;\n\nmsg.payload = flights.map(f => ({\n    id: f.id,\n    callsign: f.callsign,\n    lat: f.lat,\n    lon: f.lon,\n    altitude: f.altitude,\n    speed: f.speed,\n    heading: f.heading,\n    weather: {\n        windSpeed: Math.floor(Math.random() * 50),\n        gust: Math.floor(Math.random() * 70),\n        temperature: -40 - Math.floor(Math.random() * 20),\n        pressure: 1000 + Math.floor(Math.random() * 20),\n        humidity: Math.floor(Math.random() * 100),\n        clouds: Math.floor(Math.random() * 100),\n        precipitation: Math.floor(Math.random() * 10),\n        condition: \"Partly Cloudy\"\n    }\n}));\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 120,
+        "wires": [
+            [
+                "send_to_backend"
+            ]
+        ]
+    },
+    {
+        "id": "send_to_backend",
+        "type": "http request",
+        "z": "skyintel_ingest_flow",
+        "name": "Post to SkyIntel",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://ais-dev-7wsoifxifdzdxlcnxwk7ub-653966693214.europe-west2.run.app/api/ingest/flights",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 820,
+        "y": 120,
+        "wires": [
+            [
+                "debug_node"
+            ]
+        ]
+    },
+    {
+        "id": "debug_node",
+        "type": "debug",
+        "z": "skyintel_ingest_flow",
+        "name": "Log Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 120,
+        "wires": []
+    }
+]
