@@ -1,115 +1,121 @@
 [
-    {
-        "id": "skyintel_ingest_flow",
-        "type": "tab",
-        "label": "SkyIntel Ingestion",
-        "disabled": false,
-        "info": "Flow to fetch flight and weather data, merge them, and send to SkyIntel Backend."
-    },
-    {
-        "id": "inject_timer",
-        "type": "inject",
-        "z": "skyintel_ingest_flow",
-        "name": "Every 30s",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "30",
-        "crontab": "",
-        "once": true,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 120,
-        "y": 120,
-        "wires": [
-            [
-                "fetch_flights"
-            ]
-        ]
-    },
-    {
-        "id": "fetch_flights",
-        "type": "http request",
-        "z": "skyintel_ingest_flow",
-        "name": "Fetch Live Flights",
-        "method": "GET",
-        "ret": "obj",
-        "paytoqs": "ignore",
-        "url": "https://api.mockflights.com/live",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "authType": "",
-        "senderr": false,
-        "headers": [],
-        "x": 330,
-        "y": 120,
-        "wires": [
-            [
-                "process_flights"
-            ]
-        ]
-    },
-    {
-        "id": "process_flights",
-        "type": "function",
-        "z": "skyintel_ingest_flow",
-        "name": "Merge Weather & Score",
-        "func": "// Mock logic for Node-RED processing\nconst flights = msg.payload;\n\nmsg.payload = flights.map(f => ({\n    id: f.id,\n    callsign: f.callsign,\n    lat: f.lat,\n    lon: f.lon,\n    altitude: f.altitude,\n    speed: f.speed,\n    heading: f.heading,\n    weather: {\n        windSpeed: Math.floor(Math.random() * 50),\n        gust: Math.floor(Math.random() * 70),\n        temperature: -40 - Math.floor(Math.random() * 20),\n        pressure: 1000 + Math.floor(Math.random() * 20),\n        humidity: Math.floor(Math.random() * 100),\n        clouds: Math.floor(Math.random() * 100),\n        precipitation: Math.floor(Math.random() * 10),\n        condition: \"Partly Cloudy\"\n    }\n}));\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 580,
-        "y": 120,
-        "wires": [
-            [
-                "send_to_backend"
-            ]
-        ]
-    },
-    {
-        "id": "send_to_backend",
-        "type": "http request",
-        "z": "skyintel_ingest_flow",
-        "name": "Post to SkyIntel",
-        "method": "POST",
-        "ret": "txt",
-        "paytoqs": "ignore",
-        "url": "https://ais-dev-7wsoifxifdzdxlcnxwk7ub-653966693214.europe-west2.run.app/api/ingest/flights",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "authType": "",
-        "senderr": false,
-        "headers": [],
-        "x": 820,
-        "y": 120,
-        "wires": [
-            [
-                "debug_node"
-            ]
-        ]
-    },
-    {
-        "id": "debug_node",
-        "type": "debug",
-        "z": "skyintel_ingest_flow",
-        "name": "Log Response",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1020,
-        "y": 120,
-        "wires": []
-    }
+  {
+    "id": "flow1",
+    "type": "tab",
+    "label": "Flights PT + OpenMeteo",
+    "disabled": false
+  },
+  {
+    "id": "inject",
+    "type": "inject",
+    "z": "flow1",
+    "name": "Every 30s",
+    "props": [{"p": "payload"}],
+    "repeat": "30",
+    "once": true,
+    "onceDelay": 0.1,
+    "payloadType": "date",
+    "x": 120,
+    "y": 100,
+    "wires": [["opensky"]]
+  },
+  {
+    "id": "opensky",
+    "type": "http request",
+    "z": "flow1",
+    "name": "OpenSky PT Flights",
+    "method": "GET",
+    "ret": "obj",
+    "url": "https://opensky-network.org/api/states/all?lamin=36&lomin=-10&lamax=43&lomax=-6",
+    "x": 320,
+    "y": 100,
+    "wires": [["process"]]
+  },
+  {
+    "id": "process",
+    "type": "function",
+    "z": "flow1",
+    "name": "Normalize + Filter PT",
+    "func": "const states = msg.payload.states || [];\n\nconst MIN_LAT = 36;\nconst MAX_LAT = 43;\nconst MIN_LON = -10;\nconst MAX_LON = -6;\n\nmsg.payload = states\n  .filter(s => s[5] && s[6])\n  .map(s => ({\n    id: s[0],\n    callsign: s[1]?.trim(),\n    country: s[2],\n    lon: s[5],\n    lat: s[6],\n    altitude: s[7],\n    velocity: s[9],\n    heading: s[10]\n  }))\n  .filter(f =>\n    f.lat >= MIN_LAT && f.lat <= MAX_LAT &&\n    f.lon >= MIN_LON && f.lon <= MAX_LON\n  );\n\nreturn msg;",
+    "x": 550,
+    "y": 100,
+    "wires": [["limit"]]
+  },
+  {
+    "id": "limit",
+    "type": "function",
+    "z": "flow1",
+    "name": "Limit to 10 Flights",
+    "func": "msg.payload = msg.payload.slice(0, 10);\nreturn msg;",
+    "x": 770,
+    "y": 100,
+    "wires": [["split"]]
+  },
+  {
+    "id": "split",
+    "type": "split",
+    "z": "flow1",
+    "name": "Split Flights",
+    "splt": "\\n",
+    "arraySplt": 1,
+    "x": 970,
+    "y": 100,
+    "wires": [["buildWeather"]]
+  },
+  {
+    "id": "buildWeather",
+    "type": "function",
+    "z": "flow1",
+    "name": "Build Weather URL",
+    "func": "const f = msg.payload;\nmsg.flight = f;\nmsg.url = `https://api.open-meteo.com/v1/forecast?latitude=${f.lat}&longitude=${f.lon}&current_weather=true`;\nreturn msg;",
+    "x": 1170,
+    "y": 100,
+    "wires": [["weather"]]
+  },
+  {
+    "id": "weather",
+    "type": "http request",
+    "z": "flow1",
+    "name": "Open-Meteo",
+    "method": "GET",
+    "ret": "obj",
+    "url": "",
+    "x": 1370,
+    "y": 100,
+    "wires": [["merge"]]
+  },
+  {
+    "id": "merge",
+    "type": "function",
+    "z": "flow1",
+    "name": "Merge Flight + Weather",
+    "func": "const w = msg.payload.current_weather;\nconst f = msg.flight;\n\nmsg.payload = {\n  ...f,\n  weather: {\n    temperature: w.temperature,\n    windspeed: w.windspeed,\n    winddirection: w.winddirection,\n    weathercode: w.weathercode,\n    time: w.time\n  }\n};\n\nreturn msg;",
+    "x": 1580,
+    "y": 100,
+    "wires": [["join"]]
+  },
+  {
+    "id": "join",
+    "type": "join",
+    "z": "flow1",
+    "name": "Join All Flights",
+    "mode": "auto",
+    "build": "array",
+    "property": "payload",
+    "x": 1780,
+    "y": 100,
+    "wires": [["debug"]]
+  },
+  {
+    "id": "debug",
+    "type": "debug",
+    "z": "flow1",
+    "name": "Final Output",
+    "active": true,
+    "tosidebar": true,
+    "complete": "payload",
+    "x": 1980,
+    "y": 100,
+    "wires": []
+  }
 ]
