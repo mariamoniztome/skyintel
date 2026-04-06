@@ -2,7 +2,7 @@
   {
     "id": "flow1",
     "type": "tab",
-    "label": "Flights PT + OpenMeteo",
+    "label": "Flights PT + OpenMeteo (Safe)",
     "disabled": false
   },
   {
@@ -35,9 +35,9 @@
     "id": "process",
     "type": "function",
     "z": "flow1",
-    "name": "Normalize + Filter PT",
-    "func": "const states = msg.payload.states || [];\n\nconst MIN_LAT = 36;\nconst MAX_LAT = 43;\nconst MIN_LON = -10;\nconst MAX_LON = -6;\n\nmsg.payload = states\n  .filter(s => s[5] && s[6])\n  .map(s => ({\n    id: s[0],\n    callsign: s[1]?.trim(),\n    country: s[2],\n    lon: s[5],\n    lat: s[6],\n    altitude: s[7],\n    velocity: s[9],\n    heading: s[10]\n  }))\n  .filter(f =>\n    f.lat >= MIN_LAT && f.lat <= MAX_LAT &&\n    f.lon >= MIN_LON && f.lon <= MAX_LON\n  );\n\nreturn msg;",
-    "x": 550,
+    "name": "Normalize + Filter PT (Safe)",
+    "func": "const states = msg.payload?.states || [];\n\nif (!Array.isArray(states) || states.length === 0) {\n    node.warn(\"No flight data received\");\n    return null;\n}\n\nconst MIN_LAT = 36;\nconst MAX_LAT = 43;\nconst MIN_LON = -10;\nconst MAX_LON = -6;\n\nmsg.payload = states\n  .filter(s => s[5] && s[6])\n  .map(s => ({\n    id: s[0],\n    callsign: s[1]?.trim(),\n    country: s[2],\n    lon: s[5],\n    lat: s[6],\n    altitude: s[7],\n    velocity: s[9],\n    heading: s[10]\n  }))\n  .filter(f =>\n    f.lat >= MIN_LAT && f.lat <= MAX_LAT &&\n    f.lon >= MIN_LON && f.lon <= MAX_LON\n  );\n\nif (!Array.isArray(msg.payload) || msg.payload.length === 0) {\n    node.warn(\"No flights over Portugal\");\n    return null;\n}\n\nreturn msg;",
+    "x": 560,
     "y": 100,
     "wires": [["limit"]]
   },
@@ -47,7 +47,7 @@
     "z": "flow1",
     "name": "Limit to 10 Flights",
     "func": "msg.payload = msg.payload.slice(0, 10);\nreturn msg;",
-    "x": 770,
+    "x": 780,
     "y": 100,
     "wires": [["split"]]
   },
@@ -56,9 +56,11 @@
     "type": "split",
     "z": "flow1",
     "name": "Split Flights",
-    "splt": "\\n",
+    "splt": "",
     "arraySplt": 1,
-    "x": 970,
+    "stream": false,
+    "addname": "",
+    "x": 980,
     "y": 100,
     "wires": [["buildWeather"]]
   },
@@ -68,7 +70,7 @@
     "z": "flow1",
     "name": "Build Weather URL",
     "func": "const f = msg.payload;\nmsg.flight = f;\nmsg.url = `https://api.open-meteo.com/v1/forecast?latitude=${f.lat}&longitude=${f.lon}&current_weather=true`;\nreturn msg;",
-    "x": 1170,
+    "x": 1180,
     "y": 100,
     "wires": [["weather"]]
   },
@@ -80,7 +82,7 @@
     "method": "GET",
     "ret": "obj",
     "url": "",
-    "x": 1370,
+    "x": 1380,
     "y": 100,
     "wires": [["merge"]]
   },
@@ -89,7 +91,7 @@
     "type": "function",
     "z": "flow1",
     "name": "Merge Flight + Weather",
-    "func": "const w = msg.payload.current_weather;\nconst f = msg.flight;\n\nmsg.payload = {\n  ...f,\n  weather: {\n    temperature: w.temperature,\n    windspeed: w.windspeed,\n    winddirection: w.winddirection,\n    weathercode: w.weathercode,\n    time: w.time\n  }\n};\n\nreturn msg;",
+    "func": "const w = msg.payload?.current_weather;\nconst f = msg.flight;\n\nif (!w) {\n    node.warn(\"No weather data\");\n    return null;\n}\n\nmsg.payload = {\n  ...f,\n  weather: {\n    temperature: w.temperature,\n    windspeed: w.windspeed,\n    winddirection: w.winddirection,\n    weathercode: w.weathercode,\n    time: w.time\n  }\n};\n\nreturn msg;",
     "x": 1580,
     "y": 100,
     "wires": [["join"]]
