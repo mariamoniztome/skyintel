@@ -425,7 +425,7 @@ const FlightMap: React.FC = () => {
       <div ref={mapContainer} className="w-full h-full absolute inset-0" />
       
       {/* Unified Controls */}
-      <div ref={controlsContainer} className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
+      <div ref={controlsContainer} className="absolute bottom-8 right-4 z-20 flex items-center gap-2">
         {isFiltersOpen && (
           <div className="absolute bottom-full right-0 mb-2">
             <Filters compact className="w-75" />
@@ -487,7 +487,7 @@ const FlightMap: React.FC = () => {
           </div>
         )}
 
-        <div className="rounded-full px-2 py-1 flex items-center gap-1 bg-(--card)/90 border border-(--border) shadow-lg backdrop-blur-md">
+        <div className="rounded-full px-2 py-1 flex items-center gap-1 bg-(--card)/80 backdrop-blur-md border border-(--border) shadow-lg">
           <button onClick={handleZoomIn} title="Zoom in" className="p-2 rounded-full hover:bg-(--muted) transition-colors">
             <ZoomIn className="h-4 w-4" />
           </button>
