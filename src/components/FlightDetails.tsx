@@ -1,9 +1,9 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { X, Wind, Thermometer, Droplets, Cloud, Gauge, Navigation, ArrowUp, Activity } from "lucide-react";
+import { X, Wind, Thermometer, Droplets, Cloud, Gauge, Navigation, ArrowUp, Activity, PlaneTakeoff, PlaneLanding, Clock3, MapPin } from "lucide-react";
 import { useStore } from "@/src/store/useStore";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const FlightDetails: React.FC = () => {
   const { selectedFlightId, flights, setSelectedFlightId, theme, selectedFlight } = useStore();
@@ -14,6 +14,37 @@ const FlightDetails: React.FC = () => {
 
   const history = selectedFlight?.history ? [...selectedFlight.history].reverse() : [];
   const riskVariant = flight.riskLevel === "high" ? "danger" : flight.riskLevel === "medium" ? "warning" : "success";
+  const firstTrackedPoint = history[0] ?? null;
+  const latestTrackedPoint = history[history.length - 1] ?? null;
+  const trackingStartedAt = firstTrackedPoint?.timestamp ?? null;
+  const lastSeenAt = latestTrackedPoint?.timestamp ?? selectedFlight?.last_updated ?? flight.last_updated ?? null;
+  const isLikelyLanded = flight.altitude < 2000 && flight.speed < 80;
+
+  const formatDateTime = (value: string | null) => {
+    if (!value) return "Not available";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "Not available";
+    return parsed.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatPosition = (lat: number, lon: number) => {
+    const latLabel = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"}`;
+    const lonLabel = `${Math.abs(lon).toFixed(2)}°${lon >= 0 ? "E" : "W"}`;
+    return `${latLabel}, ${lonLabel}`;
+  };
+
+  const departurePosition = firstTrackedPoint
+    ? formatPosition(firstTrackedPoint.lat, firstTrackedPoint.lon)
+    : "Not available from live feed";
+
+  const arrivalStatus = isLikelyLanded
+    ? `Likely landed near ${formatPosition(flight.lat, flight.lon)}`
+    : "In flight (arrival location/time not available yet)";
 
   return (
     <Card className="fixed right-6 top-24 bottom-6 w-[400px] z-50 overflow-y-auto border-none bg-[var(--card)]/95 backdrop-blur-2xl rounded-[32px] animate-in slide-in-from-right duration-500">
@@ -31,6 +62,43 @@ const FlightDetails: React.FC = () => {
       </CardHeader>
       
       <CardContent className="p-8 pt-2 space-y-8">
+        {/* Trip Summary */}
+        <div className="space-y-4 rounded-2xl bg-[var(--muted)]/30 p-4 border border-[var(--border)]/50">
+          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
+            Trip Summary
+          </h4>
+          <div className="grid grid-cols-1 gap-3 text-sm text-[var(--foreground)]">
+            <div className="flex items-start gap-3">
+              <PlaneTakeoff className="h-4 w-4 mt-0.5 text-sky-500" />
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Departure (Approx.)</div>
+                <div className="font-semibold">{departurePosition}</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Clock3 className="h-4 w-4 mt-0.5 text-amber-500" />
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Tracking Started</div>
+                <div className="font-semibold">{formatDateTime(trackingStartedAt)}</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <PlaneLanding className="h-4 w-4 mt-0.5 text-emerald-500" />
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Arrival Status</div>
+                <div className="font-semibold">{arrivalStatus}</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <MapPin className="h-4 w-4 mt-0.5 text-rose-500" />
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Last Seen</div>
+                <div className="font-semibold">{formatDateTime(lastSeenAt)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Risk Score */}
         <div className="flex items-end justify-between py-6 border-b border-[var(--border)]/50">
           <div className="space-y-1">

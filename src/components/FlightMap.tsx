@@ -294,10 +294,8 @@ const FlightMap: React.FC = () => {
 
   useEffect(() => {
     if (!map.current) return;
-    // Sync style with theme if user hasn't manually changed it to satellite/streets
-    if (currentStyle === "dark-v11" || currentStyle === "light-v11") {
-      setCurrentStyle(theme === "dark" ? "dark-v11" : "light-v11");
-    }
+    // Keep base style aligned with global theme toggle.
+    setCurrentStyle(theme === "dark" ? "dark-v11" : "streets-v12");
   }, [theme]);
 
   useEffect(() => {
@@ -436,7 +434,7 @@ const FlightMap: React.FC = () => {
           <div className="absolute bottom-full right-0 mb-2 w-56 bg-(--card) border border-(--border) rounded-xl shadow-2xl p-2 space-y-1 animate-in fade-in slide-in-from-bottom-2">
             <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Base Style</div>
             <button
-              onClick={() => { setCurrentStyle(theme === "dark" ? "dark-v11" : "light-v11"); setIsMenuOpen(false); }}
+              onClick={() => { setCurrentStyle(theme === "dark" ? "dark-v11" : "streets-v12"); setIsMenuOpen(false); }}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle.includes("light") || currentStyle.includes("dark") ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
             >
               <MapIcon className="h-4 w-4" />
@@ -522,7 +520,11 @@ const FlightMap: React.FC = () => {
             <Layers className="h-4 w-4" />
           </button>
           <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            onClick={() => {
+              const nextTheme = theme === "light" ? "dark" : "light";
+              setTheme(nextTheme);
+              setCurrentStyle(nextTheme === "dark" ? "dark-v11" : "streets-v12");
+            }}
             title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
             className={`p-2 rounded-full transition-colors ${isMenuOpen ? "bg-(--muted)" : "hover:bg-(--muted)"}`}
           >

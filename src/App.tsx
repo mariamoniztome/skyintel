@@ -4,10 +4,10 @@ import FlightMap from "./components/FlightMap";
 import FlightDetails from "./components/FlightDetails";
 import AnalyticsTab from "./components/AnalyticsTab";
 import AlertsPage from "./components/AlertsPage";
-import { Activity, Bell, Map as MapIcon, Moon, Sun } from "lucide-react";
+import { Activity, Bell, Map as MapIcon } from "lucide-react";
 
 export default function App() {
-  const { fetchData, theme, setTheme } = useStore();
+  const { fetchData, theme } = useStore();
   const [currentTab, setCurrentTab] = useState<"map" | "analytics" | "alerts">("map");
 
   useEffect(() => {
@@ -23,10 +23,6 @@ export default function App() {
       document.documentElement.classList.remove("dark");
     }
   }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
 
   return (
     <div className="relative min-h-screen text-[var(--foreground)] font-sans selection:bg-sky-500/30 transition-colors duration-300 flex flex-col">
@@ -60,17 +56,6 @@ export default function App() {
           </button>
         </nav>
 
-        {currentTab !== "map" && (
-          <div className="flex items-center gap-2 md:gap-4">
-            <button 
-              onClick={toggleTheme}
-              className="p-2 rounded-full transition-colors border border-(--border) hover:bg-(--muted)"
-              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
-            >
-              {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </button>
-          </div>
-        )}
       </header>
 
       {/* Main Content Area */}

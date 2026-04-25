@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useStore } from "@/src/store/useStore";
 import StatsCards from "@/src/components/StatsCards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
@@ -6,6 +6,26 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const AnalyticsTab: React.FC = () => {
   const { flights, theme } = useStore();
+  const [search, setSearch] = useState("");
+  const [riskFilter, setRiskFilter] = useState<"all" | "low" | "medium" | "high">("all");
+  const [minAltitude, setMinAltitude] = useState(0);
+  const [maxAltitude, setMaxAltitude] = useState(50000);
+
+  const filteredFlights = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return flights.filter((f) => {
+      const matchesSearch =
+        query.length === 0 ||
+        f.id.toLowerCase().includes(query) ||
+        (f.callsign ?? "").toLowerCase().includes(query);
+
+      const matchesRisk = riskFilter === "all" ? true : f.riskLevel === riskFilter;
+      const matchesAltitude = f.altitude >= minAltitude && f.altitude <= maxAltitude;
+
+      return matchesSearch && matchesRisk && matchesAltitude;
+    });
+  }, [flights, search, riskFilter, minAltitude, maxAltitude]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -22,7 +42,7 @@ const AnalyticsTab: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Risk Level Distribution */}
         <Card className="border-[var(--border)] bg-[var(--card)] shadow-sm">
-          <CardHeader>
+          <CardHeader className="pb-0">
             <CardTitle className="text-lg font-bold text-[var(--foreground)]">Turbulence Risk Distribution</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
@@ -55,7 +75,7 @@ const AnalyticsTab: React.FC = () => {
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center gap-6 mt-4">
+            <div className="flex justify-center gap-6">
               {[
                 { name: "Low", value: flights.filter(f => f.riskLevel === "low").length, color: "#10b981" },
                 { name: "Medium", value: flights.filter(f => f.riskLevel === "medium").length, color: "#f59e0b" },
@@ -105,6 +125,44 @@ const AnalyticsTab: React.FC = () => {
           <CardTitle className="text-lg font-bold text-[var(--foreground)]">Operational Fleet Overview</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by Flight ID or Callsign"
+              className="md:col-span-2 h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+            />
+            <select
+              value={riskFilter}
+              onChange={(e) => setRiskFilter(e.target.value as "all" | "low" | "medium" | "high")}
+              className="h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+            >
+              <option value="all">All Risk Levels</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                min={0}
+                value={minAltitude}
+                onChange={(e) => setMinAltitude(Number(e.target.value) || 0)}
+                placeholder="Min ft"
+                className="h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+              />
+              <input
+                type="number"
+                min={0}
+                value={maxAltitude}
+                onChange={(e) => setMaxAltitude(Number(e.target.value) || 0)}
+                placeholder="Max ft"
+                className="h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+              />
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--border)] text-[var(--muted-foreground)] uppercase text-[10px] font-bold tracking-widest">
@@ -118,14 +176,14 @@ const AnalyticsTab: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {flights.map(f => (
+                {filteredFlights.map(f => (
                   <tr key={f.id} className="hover:bg-[var(--muted)] transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs">{f.id}</td>
-                    <td className="px-4 py-3 font-bold">{f.callsign}</td>
-                    <td className="px-4 py-3">{f.altitude.toLocaleString()} ft</td>
-                    <td className="px-4 py-3">{f.speed} kts</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-600">{f.id}</td>
+                    <td className="px-4 py-3 font-bold text-gray-600">{f.callsign}</td>
+                    <td className="px-4 py-3 text-gray-600">{f.altitude.toLocaleString()} ft</td>
+                    <td className="px-4 py-3 text-gray-600">{f.speed} kts</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      <div className="flex items-center gap-2 text-gray-600">
                         <div className="w-12 h-1.5 bg-[var(--muted)] rounded-full overflow-hidden">
                           <div 
                             className={`h-full ${f.turbulenceScore > 70 ? 'bg-rose-500' : f.turbulenceScore > 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
@@ -142,6 +200,13 @@ const AnalyticsTab: React.FC = () => {
                     </td>
                   </tr>
                 ))}
+                {filteredFlights.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-[var(--muted-foreground)]">
+                      No flights match the selected filters.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

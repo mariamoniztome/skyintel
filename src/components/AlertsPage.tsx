@@ -1,16 +1,39 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useStore } from "@/src/store/useStore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { Card, CardContent } from "@/src/components/ui/card";
 import { Badge } from "@/src/components/ui/badge";
-import { Bell, AlertCircle, Clock, Plane, MapPin, Activity, ShieldAlert } from "lucide-react";
+import { Bell, Clock, MapPin, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 
 const AlertsPage: React.FC = () => {
   const { alerts, flights } = useStore();
+  const [search, setSearch] = useState("");
+  const [severityFilter, setSeverityFilter] = useState<"all" | "warning" | "critical">("all");
+  const [minScore, setMinScore] = useState(0);
 
   const getFlightDetails = (flightId: string) => {
     return flights.find(f => f.id === flightId);
   };
+
+  const filteredAlerts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return alerts.filter((alert) => {
+      const flight = getFlightDetails(alert.flight_id);
+      const severity = alert.score >= 80 ? "critical" : "warning";
+
+      const matchesQuery =
+        query.length === 0 ||
+        alert.flight_id.toLowerCase().includes(query) ||
+        (flight?.callsign ?? "").toLowerCase().includes(query) ||
+        alert.message.toLowerCase().includes(query);
+
+      const matchesSeverity = severityFilter === "all" ? true : severity === severityFilter;
+      const matchesScore = alert.score >= minScore;
+
+      return matchesQuery && matchesSeverity && matchesScore;
+    });
+  }, [alerts, flights, search, severityFilter, minScore]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -27,6 +50,34 @@ const AlertsPage: React.FC = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by Flight ID, Callsign or Message"
+          className="h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+        />
+        <select
+          value={severityFilter}
+          onChange={(e) => setSeverityFilter(e.target.value as "all" | "warning" | "critical")}
+          className="h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+        >
+          <option value="all">All Severities</option>
+          <option value="warning">Warning (50-79)</option>
+          <option value="critical">Critical (80+)</option>
+        </select>
+        <input
+          type="number"
+          min={0}
+          max={100}
+          value={minScore}
+          onChange={(e) => setMinScore(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+          placeholder="Minimum Score %"
+          className="h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+        />
+      </div>
+
       {alerts.length === 0 ? (
         <Card className="border-[var(--border)] bg-[var(--card)] p-12 text-center shadow-sm">
           <div className="flex flex-col items-center space-y-4">
@@ -41,10 +92,16 @@ const AlertsPage: React.FC = () => {
             </div>
           </div>
         </Card>
+      ) : filteredAlerts.length === 0 ? (
+        <Card className="border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-sm">
+          <p className="text-sm text-[var(--muted-foreground)]">
+            No alerts match your current filters.
+          </p>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="xl:col-span-2 space-y-4">
-            {alerts.map((alert) => {
+            {filteredAlerts.map((alert) => {
               const flight = getFlightDetails(alert.flight_id);
               return (
                 <Card key={alert.id} className="border-[var(--border)] bg-[var(--card)] hover:border-rose-500/30 transition-all shadow-sm group overflow-hidden">
@@ -110,7 +167,7 @@ const AlertsPage: React.FC = () => {
           </div>
 
           {/* Sidebar Stats for Alerts */}
-          <div className="space-y-6">
+          {/* <div className="space-y-6">
             <Card className="border-[var(--border)] bg-[var(--card)] shadow-sm">
               <CardHeader>
                 <CardTitle className="text-sm font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Alert Statistics</CardTitle>
@@ -132,24 +189,7 @@ const AlertsPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden">
-              <div className="p-4 bg-sky-600 text-white">
-                <h3 className="text-xs font-black uppercase tracking-widest">Safety Protocol</h3>
-              </div>
-              <CardContent className="p-4 space-y-3">
-                <p className="text-[11px] text-[var(--muted-foreground)] leading-relaxed italic">
-                  "All high-risk turbulence alerts (Score {'>'} 70%) must be communicated to flight operations immediately for route reassessment."
-                </p>
-                <div className="pt-2 border-t border-[var(--border)]">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--foreground)]">
-                    <Activity className="h-3 w-3 text-sky-500" />
-                    SYSTEM STATUS: OPTIMAL
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          </div> */}
         </div>
       )}
     </div>
