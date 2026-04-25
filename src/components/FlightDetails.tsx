@@ -16,7 +16,7 @@ const FlightDetails: React.FC = () => {
   const riskVariant = flight.riskLevel === "high" ? "danger" : flight.riskLevel === "medium" ? "warning" : "success";
 
   return (
-    <Card className="fixed right-6 top-24 bottom-6 w-[400px] z-50 overflow-y-auto border-none bg-[var(--card)]/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-[32px] animate-in slide-in-from-right duration-500">
+    <Card className="fixed right-6 top-24 bottom-6 w-[400px] z-50 overflow-y-auto border-none bg-[var(--card)]/95 backdrop-blur-2xl rounded-[32px] animate-in slide-in-from-right duration-500">
       <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-transparent z-10 p-8 pb-4">
         <div>
           <CardTitle className="text-3xl font-black tracking-tighter text-[var(--foreground)]">{flight.callsign || flight.id}</CardTitle>

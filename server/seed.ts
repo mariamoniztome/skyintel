@@ -1,3 +1,13 @@
+/**
+ * @deprecated - Mock data seeding is no longer used.
+ * The application now uses real-time flight data from the OpenSky Network API.
+ * 
+ * This file is kept for reference/testing purposes only.
+ * To use mock data for development, you would need to:
+ * 1. Call seed() from server.ts
+ * 2. And comment out or remove the fetchOpenSkyData() interval
+ */
+
 import db from "./db.js";
 import { calculateTurbulence } from "./utils/turbulence.js";
 

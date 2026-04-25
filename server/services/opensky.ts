@@ -4,27 +4,54 @@ import { calculateTurbulence } from "../utils/turbulence.js";
 
 const OPENSKY_URL = "https://opensky-network.org/api/states/all";
 
+type RegionBox = {
+  name: string;
+  lamin: number;
+  lomin: number;
+  lamax: number;
+  lomax: number;
+};
+
+const TARGET_REGIONS: RegionBox[] = [
+  // Mainland Portugal + western Spain buffer.
+  { name: "iberia-west", lamin: 35.0, lomin: -10.5, lamax: 44.5, lomax: -1.5 },
+  { name: "madeira", lamin: 32.0, lomin: -18.8, lamax: 34.0, lomax: -15.0 },
+  { name: "azores", lamin: 36.0, lomin: -31.8, lamax: 40.8, lomax: -24.0 },
+];
+
+function isInTargetRegions(lat: number, lon: number): boolean {
+  return TARGET_REGIONS.some(region =>
+    lat >= region.lamin &&
+    lat <= region.lamax &&
+    lon >= region.lomin &&
+    lon <= region.lomax,
+  );
+}
+
 export async function fetchOpenSkyData() {
   try {
-    console.log("Fetching data from OpenSky...");
-    // Limit to a bounding box for better performance/relevance (e.g., Europe)
-    // lamin, lomin, lamax, lomax (Europe bounding box)
-    const response = await axios.get(`${OPENSKY_URL}?lamin=35&lomin=-15&lamax=70&lomax=40`, {
+    console.log("Fetching data from OpenSky (Portugal, Madeira, Azores + nearby Spain)...");
+    // Coarse envelope, then strict filtering against target region boxes.
+    const response = await axios.get(`${OPENSKY_URL}?lamin=30&lomin=-32&lamax=45&lomax=-1`, {
       timeout: 30000
     });
 
     const states = response.data.states;
     if (!states || !Array.isArray(states)) {
-      console.log("No states received from OpenSky.");
+      console.log("No flights received from OpenSky for Portugal/Madeira/Azores region.");
       return;
     }
 
-    console.log(`Received ${states.length} states from OpenSky.`);
+    const filteredStates = states.filter((s: any[]) => {
+      const lon = s[5];
+      const lat = s[6];
+      if (lat === null || lon === null) return false;
+      return isInTargetRegions(lat, lon);
+    });
 
-    // Process top 100 flights
-    const topStates = states.slice(0, 100);
+    console.log(`Received ${states.length} flights from OpenSky. Keeping ${filteredStates.length} in target regions.`);
 
-    for (const s of topStates) {
+    for (const s of filteredStates) {
       const id = s[0]; // icao24
       const callsign = s[1]?.trim() || id;
       const lon = s[5];
@@ -41,10 +68,9 @@ export async function fetchOpenSkyData() {
     // Cleanup old flights (not updated in last 5 minutes)
     db.prepare("DELETE FROM flights WHERE last_updated < datetime('now', '-5 minutes')").run();
     
-    console.log(`OpenSky sync complete. Processed ${topStates.length} flights.`);
+    console.log(`OpenSky sync complete. Processed ${filteredStates.length} flights.`);
   } catch (error) {
-    console.error("Error fetching OpenSky data, using dynamic fallback:", error);
-    generateMockFlights();
+    console.error("Error fetching OpenSky data:", error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -114,25 +140,4 @@ function processFlight(id: string, callsign: string, lat: number, lon: number, a
   }
 }
 
-function generateMockFlights() {
-  console.log("Generating 50 dynamic mock flights...");
-  const prefixes = ["BAW", "AFR", "DLH", "UAL", "EMR", "QTR", "SIA", "KLM", "RYR", "EZY"];
-  
-  for (let i = 0; i < 50; i++) {
-    const id = `MOCK${1000 + i}`;
-    const callsign = `${prefixes[i % prefixes.length]}${100 + i}`;
-    
-    // Random position in Europe/North Atlantic
-    const lat = 35 + (Math.random() * 35);
-    const lon = -15 + (Math.random() * 55);
-    const altitude = 25000 + (Math.random() * 15000);
-    const speed = 400 + (Math.random() * 100);
-    const heading = Math.random() * 360;
 
-    processFlight(id, callsign, lat, lon, altitude, speed, heading);
-  }
-  
-  // Cleanup old flights (not updated in last 5 minutes)
-  db.prepare("DELETE FROM flights WHERE last_updated < datetime('now', '-5 minutes')").run();
-  console.log("Dynamic mock flight generation complete.");
-}

@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import apiRouter from "./server/routes/api.js";
 import { initDb } from "./server/db.js";
-import { seed } from "./server/seed.js";
 import db from "./server/db.js";
 import { fetchOpenSkyData } from "./server/services/opensky.js";
 
@@ -21,8 +20,8 @@ async function startServer() {
   // Initialize Database
   initDb();
 
-  // Start OpenSky Sync
-  console.log("Initializing OpenSky sync...");
+  // Start OpenSky Real-Time Data Sync (fetches live flight data from OpenSky Network)
+  console.log("Initializing OpenSky real-time data sync...");
   fetchOpenSkyData();
   setInterval(fetchOpenSkyData, 60000); // Sync every 60s to respect rate limits
 

@@ -34,12 +34,12 @@ export default function App() {
       {/* Top Navbar */}
       <header className="h-16 border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-xl sticky top-0 z-50 px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+          <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center">
             <Plane className="h-6 w-6 text-white" />
           </div>
           <div className="hidden sm:block">
             <h1 className="text-lg font-black tracking-tighter uppercase leading-none">SkyIntel</h1>
-            <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Aviation Intelligence</span>
+            {/* <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Aviation Intelligence</span> */}
           </div>
         </div>
 
