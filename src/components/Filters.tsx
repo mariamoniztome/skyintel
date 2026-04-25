@@ -1,13 +1,20 @@
 import React from "react";
-import { Input, Select } from "./ui/ui-components";
-import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Select } from "./ui/ui-components";
+import { Filter, SlidersHorizontal } from "lucide-react";
 import { useStore } from "@/src/store/useStore";
 
-const Filters: React.FC = () => {
+interface FiltersProps {
+  compact?: boolean;
+  className?: string;
+}
+
+const Filters: React.FC<FiltersProps> = ({ compact = false, className = "" }) => {
   const { searchQuery, setSearchQuery, riskFilter, setRiskFilter } = useStore();
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 items-center bg-[var(--card)] backdrop-blur-md p-4 rounded-xl border border-[var(--border)] shadow-sm">
+    <div
+      className={`flex gap-4 items-center bg-[var(--card)] backdrop-blur-md p-4 rounded-xl border border-[var(--border)] shadow-sm ${compact ? "flex-col min-w-65" : "flex-col md:flex-row"} ${className}`.trim()}
+    >
       <div className="flex items-center gap-3 w-full md:w-auto">
         <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)] whitespace-nowrap">
           <Filter className="h-3 w-3" /> Risk Level:
@@ -36,7 +43,7 @@ const Filters: React.FC = () => {
         </Select>
       </div>
       
-      <div className="ml-auto hidden lg:block">
+      <div className={`ml-auto ${compact ? "hidden" : "hidden lg:block"}`}>
         <div className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-widest font-bold">
           SkyIntel v1.0.4
         </div>

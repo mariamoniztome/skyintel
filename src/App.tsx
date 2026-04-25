@@ -2,10 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useStore } from "./store/useStore";
 import FlightMap from "./components/FlightMap";
 import FlightDetails from "./components/FlightDetails";
-import Filters from "./components/Filters";
 import AnalyticsTab from "./components/AnalyticsTab";
 import AlertsPage from "./components/AlertsPage";
-import { Plane, Activity, Bell, Map as MapIcon, Settings, User, Moon, Sun } from "lucide-react";
+import { Activity, Bell, Map as MapIcon, Moon, Sun } from "lucide-react";
 
 export default function App() {
   const { fetchData, theme, setTheme } = useStore();
@@ -30,13 +29,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans selection:bg-blue-500/30 transition-colors duration-300 flex flex-col">
+    <div className="relative min-h-screen text-[var(--foreground)] font-sans selection:bg-blue-500/30 transition-colors duration-300 flex flex-col">
       {/* Top Navbar */}
-      <header className="h-16 border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-xl sticky top-0 z-50 px-6 flex items-center justify-between shrink-0">
+      <header className="absolute top-0 inset-x-0 h-16 bg-linear-to-b from-gray-500/50 via-gray-500/20 to-transparent backdrop-blur-sm z-50 px-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center">
-            <Plane className="h-6 w-6 text-white" />
-          </div>
           <div className="hidden sm:block">
             <h1 className="text-lg font-black tracking-tighter uppercase leading-none">SkyIntel</h1>
             {/* <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Aviation Intelligence</span> */}
@@ -82,18 +78,11 @@ export default function App() {
             <div className="absolute inset-0">
               <FlightMap />
             </div>
-            
-            {/* Floating Filters Overlay */}
-            <div className="absolute top-6 left-6 right-6 z-10 pointer-events-none">
-              <div className="max-w-4xl pointer-events-auto">
-                <Filters />
-              </div>
-            </div>
 
             {/* Floating Details Panel is handled by FlightDetails component */}
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 pt-24">
             <div className="max-w-[1600px] mx-auto">
               {currentTab === "analytics" ? <AnalyticsTab /> : <AlertsPage />}
             </div>

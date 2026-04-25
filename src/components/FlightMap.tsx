@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { useStore, Flight } from "@/src/store/useStore";
-import { Layers, Map as MapIcon, Satellite, Activity, Navigation, CloudRain } from "lucide-react";
+import { Layers, Map as MapIcon, Satellite, Activity, Navigation, CloudRain, ZoomIn, ZoomOut, Maximize2, Filter } from "lucide-react";
+import Filters from "./Filters";
 
 // Replace with your actual token or use env
 const MAPBOX_TOKEN = (import.meta as any).env.VITE_MAPBOX_ACCESS_TOKEN || "pk.eyJ1IjoibWFyaWFqbW9uaXp0b21lIiwiYSI6ImNtbjM1M2p3bzE0bzgyc3FzMm50OTFiNXYifQ.c2jZXmW-MNuxvJgiuda7fw";
@@ -20,18 +21,20 @@ const EXPLORE_BOUNDS: mapboxgl.LngLatBoundsLike = [
 
 const FlightMap: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
+  const controlsContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const { flights, setSelectedFlightId, riskFilter, searchQuery, theme, selectedFlight } = useStore();
   
-  const [currentStyle, setCurrentStyle] = useState<MapStyle>(theme === "dark" ? "dark-v11" : "light-v11");
+  const [currentStyle, setCurrentStyle] = useState<MapStyle>("streets-v12");
   const [showTraffic, setShowTraffic] = useState(false);
   const [showWeather, setShowWeather] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [weatherTimestamp, setWeatherTimestamp] = useState<number | null>(null);
 
   const clearAllMarkers = () => {
-    Object.values(markers.current).forEach(marker => marker.remove());
+    Object.values(markers.current).forEach((marker: mapboxgl.Marker) => marker.remove());
     markers.current = {};
   };
 
@@ -84,15 +87,6 @@ const FlightMap: React.FC = () => {
       maxBounds: EXPLORE_BOUNDS,
       trackResize: true,
     });
-
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-    map.current.addControl(new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true
-      },
-      trackUserLocation: true,
-      showUserHeading: true
-    }), "top-right");
 
     // Handle container resize
     const resizeObserver = new ResizeObserver(() => {
@@ -316,6 +310,49 @@ const FlightMap: React.FC = () => {
   }, [selectedFlight]);
 
   useEffect(() => {
+    if (!isMenuOpen && !isFiltersOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (controlsContainer.current && !controlsContainer.current.contains(target)) {
+        setIsMenuOpen(false);
+        setIsFiltersOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen, isFiltersOpen]);
+
+  const handleZoomIn = () => {
+    if (!map.current) return;
+    map.current.easeTo({ zoom: map.current.getZoom() + 0.8, duration: 250 });
+  };
+
+  const handleZoomOut = () => {
+    if (!map.current) return;
+    map.current.easeTo({ zoom: map.current.getZoom() - 0.8, duration: 250 });
+  };
+
+  const handleFullscreen = () => {
+    if (!map.current) return;
+    const container = map.current.getContainer();
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+      return;
+    }
+    void container.requestFullscreen?.();
+  };
+
+  const handleUserLocation = () => {
+    if (!map.current || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((position) => {
+      const { latitude, longitude } = position.coords;
+      map.current?.flyTo({ center: [longitude, latitude], zoom: 9, essential: true });
+    });
+  };
+
+  useEffect(() => {
     if (!map.current) return;
 
     // Filter flights
@@ -384,74 +421,106 @@ const FlightMap: React.FC = () => {
   }, [flights, riskFilter, searchQuery, setSelectedFlightId]);
 
   return (
-    <div className="relative w-full h-full min-h-100 rounded-xl overflow-hidden border border-(--border) shadow-2xl">
+    <div className="relative w-full h-full min-h-100 overflow-hidden border border-(--border) shadow-2xl">
       <div ref={mapContainer} className="w-full h-full absolute inset-0" />
       
-      {/* Layer Controls */}
-      <div className="absolute top-4 right-12 z-20">
-        <div className="relative">
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 bg-(--card)/90 backdrop-blur-md border border-(--border) rounded-lg shadow-sm hover:bg-(--muted) transition-colors"
-            title="Map Layers"
-          >
-            <Layers className="h-5 w-5" />
+      {/* Unified Controls */}
+      <div ref={controlsContainer} className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
+        {isFiltersOpen && (
+          <div className="absolute bottom-full right-0 mb-2">
+            <Filters compact className="w-75" />
+          </div>
+        )}
+
+        {isMenuOpen && (
+          <div className="absolute bottom-full right-0 mb-2 w-56 bg-(--card) border border-(--border) rounded-xl shadow-2xl p-2 space-y-1 animate-in fade-in slide-in-from-bottom-2">
+            <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Base Style</div>
+            <button
+              onClick={() => { setCurrentStyle(theme === "dark" ? "dark-v11" : "light-v11"); setIsMenuOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle.includes("light") || currentStyle.includes("dark") ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+            >
+              <MapIcon className="h-4 w-4" />
+              <span>Default {theme === "dark" ? "Dark" : "Light"}</span>
+            </button>
+            <button
+              onClick={() => { setCurrentStyle("streets-v12"); setIsMenuOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "streets-v12" ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+            >
+              <Navigation className="h-4 w-4" />
+              <span>Streets</span>
+            </button>
+            <button
+              onClick={() => { setCurrentStyle("satellite-v9"); setIsMenuOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "satellite-v9" ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+            >
+              <Satellite className="h-4 w-4" />
+              <span>Satellite</span>
+            </button>
+
+            <div className="h-px bg-(--border) my-1" />
+            <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Overlays</div>
+            <button
+              onClick={() => setShowTraffic(!showTraffic)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showTraffic ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                <span>Traffic Density</span>
+              </div>
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${showTraffic ? "bg-blue-500" : "bg-gray-400"}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showTraffic ? "right-0.5" : "left-0.5"}`} />
+              </div>
+            </button>
+
+            <button
+              onClick={() => setShowWeather(!showWeather)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showWeather ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+            >
+              <div className="flex items-center gap-2">
+                <CloudRain className="h-4 w-4" />
+                <span>Weather Radar</span>
+              </div>
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${showWeather ? "bg-blue-500" : "bg-gray-400"}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showWeather ? "right-0.5" : "left-0.5"}`} />
+              </div>
+            </button>
+          </div>
+        )}
+
+        <div className="rounded-full px-2 py-1 flex items-center gap-1 bg-(--card)/90 border border-(--border) shadow-lg backdrop-blur-md">
+          <button onClick={handleZoomIn} title="Zoom in" className="p-2 rounded-full hover:bg-(--muted) transition-colors">
+            <ZoomIn className="h-4 w-4" />
           </button>
-
-          {isMenuOpen && (
-            <div className="absolute top-full right-0 mt-2 w-48 bg-(--card) border border-(--border) rounded-xl shadow-2xl p-2 space-y-1 animate-in fade-in slide-in-from-top-2">
-              <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Base Style</div>
-              <button 
-                onClick={() => { setCurrentStyle(theme === "dark" ? "dark-v11" : "light-v11"); setIsMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle.includes('light') || currentStyle.includes('dark') ? 'bg-(--muted) text-(--accent)' : 'hover:bg-(--muted)'}`}
-              >
-                <MapIcon className="h-4 w-4" />
-                <span>Default {theme === "dark" ? "Dark" : "Light"}</span>
-              </button>
-              <button 
-                onClick={() => { setCurrentStyle("streets-v12"); setIsMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "streets-v12" ? 'bg-(--muted) text-(--accent)' : 'hover:bg-(--muted)'}`}
-              >
-                <Navigation className="h-4 w-4" />
-                <span>Streets</span>
-              </button>
-              <button 
-                onClick={() => { setCurrentStyle("satellite-v9"); setIsMenuOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "satellite-v9" ? 'bg-(--muted) text-(--accent)' : 'hover:bg-(--muted)'}`}
-              >
-                <Satellite className="h-4 w-4" />
-                <span>Satellite</span>
-              </button>
-
-              <div className="h-px bg-(--border) my-1" />
-              <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Overlays</div>
-              <button 
-                onClick={() => { setShowTraffic(!showTraffic); setIsMenuOpen(false); }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showTraffic ? 'bg-(--muted) text-(--accent)' : 'hover:bg-(--muted)'}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  <span>Traffic Density</span>
-                </div>
-                <div className={`w-8 h-4 rounded-full relative transition-colors ${showTraffic ? 'bg-blue-500' : 'bg-gray-400'}`}>
-                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showTraffic ? 'right-0.5' : 'left-0.5'}`} />
-                </div>
-              </button>
-
-              <button 
-                onClick={() => { setShowWeather(!showWeather); setIsMenuOpen(false); }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showWeather ? 'bg-(--muted) text-(--accent)' : 'hover:bg-(--muted)'}`}
-              >
-                <div className="flex items-center gap-2">
-                  <CloudRain className="h-4 w-4" />
-                  <span>Weather Radar</span>
-                </div>
-                <div className={`w-8 h-4 rounded-full relative transition-colors ${showWeather ? 'bg-blue-500' : 'bg-gray-400'}`}>
-                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showWeather ? 'right-0.5' : 'left-0.5'}`} />
-                </div>
-              </button>
-            </div>
-          )}
+          <button onClick={handleZoomOut} title="Zoom out" className="p-2 rounded-full hover:bg-(--muted) transition-colors">
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <button onClick={handleFullscreen} title="Fullscreen" className="p-2 rounded-full hover:bg-(--muted) transition-colors">
+            <Maximize2 className="h-4 w-4" />
+          </button>
+          <div className="w-px h-5 bg-(--border) mx-0.5" />
+          <button onClick={handleUserLocation} title="Center on my location" className="p-2 rounded-full hover:bg-(--muted) transition-colors">
+            <Navigation className="h-4 w-4 -rotate-90" />
+          </button>
+          <button
+            onClick={() => {
+              setIsFiltersOpen(!isFiltersOpen);
+              setIsMenuOpen(false);
+            }}
+            title="Filters"
+            className={`p-2 rounded-full transition-colors ${isFiltersOpen ? "bg-(--muted)" : "hover:bg-(--muted)"}`}
+          >
+            <Filter className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => {
+              setIsMenuOpen(!isMenuOpen);
+              setIsFiltersOpen(false);
+            }}
+            title="Map layers"
+            className={`p-2 rounded-full transition-colors ${isMenuOpen ? "bg-(--muted)" : "hover:bg-(--muted)"}`}
+          >
+            <Layers className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
