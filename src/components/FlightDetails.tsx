@@ -5,6 +5,52 @@ import { X, Wind, Thermometer, Droplets, Cloud, Gauge, Navigation, ArrowUp, Acti
 import { useStore } from "@/src/store/useStore";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
+type AirportRef = {
+  iata: string;
+  city: string;
+  name: string;
+  lat: number;
+  lon: number;
+};
+
+const AIRPORT_REFERENCES: AirportRef[] = [
+  { iata: "OPO", city: "Porto", name: "Francisco Sa Carneiro", lat: 41.2481, lon: -8.6814 },
+  { iata: "LIS", city: "Lisbon", name: "Humberto Delgado", lat: 38.7742, lon: -9.1342 },
+  { iata: "FAO", city: "Faro", name: "Faro Airport", lat: 37.0144, lon: -7.9659 },
+  { iata: "MAD", city: "Madrid", name: "Adolfo Suarez Madrid-Barajas", lat: 40.4722, lon: -3.5609 },
+  { iata: "BCN", city: "Barcelona", name: "Barcelona El Prat", lat: 41.2974, lon: 2.0833 },
+  { iata: "LUX", city: "Luxembourg", name: "Luxembourg Airport", lat: 49.6233, lon: 6.2044 },
+  { iata: "CDG", city: "Paris", name: "Charles de Gaulle", lat: 49.0097, lon: 2.5479 },
+  { iata: "LHR", city: "London", name: "Heathrow", lat: 51.47, lon: -0.4543 },
+  { iata: "AMS", city: "Amsterdam", name: "Schiphol", lat: 52.31, lon: 4.7683 },
+  { iata: "FRA", city: "Frankfurt", name: "Frankfurt Airport", lat: 50.0379, lon: 8.5622 },
+];
+
+const EARTH_RADIUS_KM = 6371;
+
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return 2 * EARTH_RADIUS_KM * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function resolveNearestAirport(lat: number, lon: number) {
+  let nearest: { airport: AirportRef; distanceKm: number } | null = null;
+
+  for (const airport of AIRPORT_REFERENCES) {
+    const distanceKm = getDistanceKm(lat, lon, airport.lat, airport.lon);
+    if (!nearest || distanceKm < nearest.distanceKm) {
+      nearest = { airport, distanceKm };
+    }
+  }
+
+  if (!nearest || nearest.distanceKm > 120) return null;
+  return nearest;
+}
+
 const FlightDetails: React.FC = () => {
   const { selectedFlightId, flights, setSelectedFlightId, theme, selectedFlight } = useStore();
   
@@ -38,13 +84,23 @@ const FlightDetails: React.FC = () => {
     return `${latLabel}, ${lonLabel}`;
   };
 
+  const formatLocationLabel = (lat: number, lon: number) => {
+    const nearest = resolveNearestAirport(lat, lon);
+    if (!nearest) return formatPosition(lat, lon);
+    return `${nearest.airport.city} (${nearest.airport.iata})`;
+  };
+
   const departurePosition = firstTrackedPoint
-    ? formatPosition(firstTrackedPoint.lat, firstTrackedPoint.lon)
+    ? formatLocationLabel(firstTrackedPoint.lat, firstTrackedPoint.lon)
     : "Not available from live feed";
 
   const arrivalStatus = isLikelyLanded
-    ? `Likely landed near ${formatPosition(flight.lat, flight.lon)}`
+    ? `Likely landed near ${formatLocationLabel(flight.lat, flight.lon)}`
     : "In flight (arrival location/time not available yet)";
+
+  const routeLabel = firstTrackedPoint
+    ? `${formatLocationLabel(firstTrackedPoint.lat, firstTrackedPoint.lon)} -> ${formatLocationLabel(flight.lat, flight.lon)}`
+    : "Route unavailable";
 
   return (
     <Card className="fixed right-6 top-24 bottom-6 w-[400px] z-50 overflow-y-auto border-none bg-[var(--card)]/95 backdrop-blur-2xl rounded-[32px] animate-in slide-in-from-right duration-500">
@@ -68,6 +124,13 @@ const FlightDetails: React.FC = () => {
             Trip Summary
           </h4>
           <div className="grid grid-cols-1 gap-3 text-sm text-[var(--foreground)]">
+            <div className="flex items-start gap-3">
+              <PlaneTakeoff className="h-4 w-4 mt-0.5 text-sky-500" />
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Route (Approx.)</div>
+                <div className="font-semibold">{routeLabel}</div>
+              </div>
+            </div>
             <div className="flex items-start gap-3">
               <PlaneTakeoff className="h-4 w-4 mt-0.5 text-sky-500" />
               <div>

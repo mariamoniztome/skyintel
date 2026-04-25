@@ -38,6 +38,22 @@ const FlightMap: React.FC = () => {
     markers.current = {};
   };
 
+  const getSafeHeading = (heading: number) => {
+    if (!Number.isFinite(heading)) return 0;
+    const normalized = heading % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  };
+
+  const updateMarkerVisual = (el: HTMLDivElement, color: string, heading: number) => {
+    el.style.backgroundColor = color;
+    el.style.boxShadow = `0 0 10px ${color}`;
+
+    const icon = el.querySelector(".plane-icon") as HTMLDivElement | null;
+    if (icon) {
+      icon.style.transform = `rotate(${getSafeHeading(heading)}deg)`;
+    }
+  };
+
   useEffect(() => {
     // Fetch latest weather timestamp from RainViewer - refresh every 5 minutes
     const fetchWeatherData = () => {
@@ -374,6 +390,7 @@ const FlightMap: React.FC = () => {
       
       if (markers.current[flight.id]) {
         markers.current[flight.id].setLngLat([flight.lon, flight.lat]);
+        updateMarkerVisual(markers.current[flight.id].getElement() as HTMLDivElement, color, flight.heading);
       } else {
         const el = document.createElement("div");
         el.className = "marker";
@@ -385,8 +402,8 @@ const FlightMap: React.FC = () => {
         el.style.cursor = "pointer";
         el.style.boxShadow = `0 0 10px ${color}`;
         
-        // Add plane icon or simple dot
-        el.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; font-size: 10px; font-weight: bold;">✈</div>`;
+        // Rotate the plane icon by heading so orientation matches current track.
+        el.innerHTML = `<div class="plane-icon" style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; font-size: 10px; font-weight: bold; transform: rotate(${getSafeHeading(flight.heading)}deg); transform-origin: center;">✈</div>`;
 
         const popup = new mapboxgl.Popup({
           offset: 25,

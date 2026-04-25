@@ -7,7 +7,7 @@ import AlertsPage from "./components/AlertsPage";
 import { Activity, Bell, Map as MapIcon } from "lucide-react";
 
 export default function App() {
-  const { fetchData, theme } = useStore();
+  const { fetchData, theme, setSelectedFlightId } = useStore();
   const [currentTab, setCurrentTab] = useState<"map" | "analytics" | "alerts">("map");
 
   useEffect(() => {
@@ -23,6 +23,12 @@ export default function App() {
       document.documentElement.classList.remove("dark");
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (currentTab !== "map") {
+      setSelectedFlightId(null);
+    }
+  }, [currentTab, setSelectedFlightId]);
 
   return (
     <div className="relative min-h-screen text-[var(--foreground)] font-sans selection:bg-sky-500/30 transition-colors duration-300 flex flex-col">
@@ -78,7 +84,7 @@ export default function App() {
       </main>
 
       {/* Side Panel for Details */}
-      <FlightDetails />
+      {currentTab === "map" && <FlightDetails />}
 
       {/* Footer - Only show on non-map pages for better UX */}
       {currentTab !== "map" && (
