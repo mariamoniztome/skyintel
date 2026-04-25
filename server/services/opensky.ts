@@ -75,9 +75,6 @@ export async function fetchOpenSkyData() {
 }
 
 function processFlight(id: string, callsign: string, lat: number, lon: number, altitude: number, speed: number, heading: number) {
-  // Check if flight is new to seed history
-  const existing = db.prepare("SELECT id FROM flights WHERE id = ?").get(id);
-  
   // Update or Insert Flight
   db.prepare(`
     INSERT INTO flights (id, callsign, lat, lon, altitude, speed, heading, last_updated)
@@ -90,19 +87,6 @@ function processFlight(id: string, callsign: string, lat: number, lon: number, a
       heading=excluded.heading,
       last_updated=CURRENT_TIMESTAMP
   `).run(id, callsign, lat, lon, altitude, speed, heading);
-
-  // If new, seed some history points behind it to show a path immediately
-  if (!existing) {
-    for (let i = 1; i <= 5; i++) {
-      const offset = i * 0.05;
-      const hLat = lat - (Math.cos(heading * Math.PI / 180) * offset);
-      const hLon = lon - (Math.sin(heading * Math.PI / 180) * offset);
-      db.prepare(`
-        INSERT INTO turbulence_history (flight_id, score, risk_level, altitude, lat, lon, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now', ?))
-      `).run(id, Math.random() * 50, "low", altitude, hLat, hLon, `-${i * 5} minutes`);
-    }
-  }
 
   // Generate mock weather for the flight
   const weather = {

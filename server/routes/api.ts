@@ -23,8 +23,11 @@ router.get("/flights/:id", (req, res) => {
   const history = db.prepare(`
     SELECT score, altitude, lat, lon, timestamp 
     FROM turbulence_history 
-    WHERE flight_id = ? 
-    ORDER BY timestamp DESC 
+    WHERE flight_id = ?
+      AND timestamp >= datetime('now', '-3 hours')
+      AND lat IS NOT NULL
+      AND lon IS NOT NULL
+    ORDER BY id DESC 
     LIMIT 50
   `).all(req.params.id);
 
