@@ -17,7 +17,7 @@ const FlightDetails: React.FC = () => {
 
   return (
     <Card className="fixed right-6 top-24 bottom-6 w-[400px] z-50 overflow-y-auto border-none bg-[var(--card)]/95 backdrop-blur-2xl rounded-[32px] animate-in slide-in-from-right duration-500">
-      <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-transparent z-10 p-8 pb-4">
+      <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-white z-10 p-8 pb-4">
         <div>
           <CardTitle className="text-3xl font-black tracking-tighter text-[var(--foreground)]">{flight.callsign || flight.id}</CardTitle>
           <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] mt-1 opacity-60">Flight ID: {flight.id}</div>
@@ -79,7 +79,7 @@ const FlightDetails: React.FC = () => {
           </h4>
           <div className="grid grid-cols-2 gap-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <div className="p-2 rounded-xl bg-sky-500/10 text-sky-500">
                 <Wind className="h-4 w-4" />
               </div>
               <div>

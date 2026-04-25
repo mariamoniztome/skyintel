@@ -16,8 +16,8 @@ const StatsCards: React.FC = () => {
       title: "Total Flights",
       value: flights.length,
       icon: Plane,
-      color: "text-blue-400",
-      bg: "bg-blue-400/10"
+      color: "text-sky-400",
+      bg: "bg-sky-400/10"
     },
     {
       title: "High Risk",

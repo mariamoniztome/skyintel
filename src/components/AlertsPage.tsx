@@ -95,7 +95,7 @@ const AlertsPage: React.FC = () => {
                       </div>
 
                       <div className="md:w-48 flex flex-col justify-center gap-3 border-t md:border-t-0 md:border-l border-[var(--border)] pt-4 md:pt-0 md:pl-6">
-                        <button className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2">
+                        <button className="w-full py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2">
                           <MapPin className="h-3 w-3" /> Locate on Map
                         </button>
                         <button className="w-full py-2 rounded-lg border border-[var(--border)] hover:bg-[var(--muted)] text-[var(--foreground)] text-xs font-bold transition-colors">
@@ -126,7 +126,7 @@ const AlertsPage: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--muted)]">
                   <span className="text-xs font-medium">Avg. Risk Score</span>
-                  <span className="text-sm font-bold text-blue-500">
+                  <span className="text-sm font-bold text-sky-500">
                     {alerts.length > 0 ? Math.round(alerts.reduce((acc, a) => acc + a.score, 0) / alerts.length) : 0}%
                   </span>
                 </div>
@@ -134,7 +134,7 @@ const AlertsPage: React.FC = () => {
             </Card>
 
             <Card className="border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden">
-              <div className="p-4 bg-blue-600 text-white">
+              <div className="p-4 bg-sky-600 text-white">
                 <h3 className="text-xs font-black uppercase tracking-widest">Safety Protocol</h3>
               </div>
               <CardContent className="p-4 space-y-3">
@@ -143,7 +143,7 @@ const AlertsPage: React.FC = () => {
                 </p>
                 <div className="pt-2 border-t border-[var(--border)]">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--foreground)]">
-                    <Activity className="h-3 w-3 text-blue-500" />
+                    <Activity className="h-3 w-3 text-sky-500" />
                     SYSTEM STATUS: OPTIMAL
                   </div>
                 </div>

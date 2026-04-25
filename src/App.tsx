@@ -29,46 +29,48 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen text-[var(--foreground)] font-sans selection:bg-blue-500/30 transition-colors duration-300 flex flex-col">
+    <div className="relative min-h-screen text-[var(--foreground)] font-sans selection:bg-sky-500/30 transition-colors duration-300 flex flex-col">
       {/* Top Navbar */}
-      <header className="absolute top-0 inset-x-0 h-16 bg-linear-to-b from-gray-500/50 via-gray-500/20 to-transparent backdrop-blur-sm z-50 px-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header className={`absolute top-0 inset-x-0 h-16 z-50 px-6 flex items-center justify-end ${currentTab === "map" ? "bg-linear-to-b from-white/92 via-white/55 to-transparent backdrop-blur-md text-slate-900" : "bg-(--card)/92 border-b border-(--border) text-(--foreground)"}`}>
+        {/* <div className="flex items-center gap-3">
           <div className="hidden sm:block">
-            <h1 className="text-lg font-black tracking-tighter uppercase leading-none">SkyIntel</h1>
-            {/* <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Aviation Intelligence</span> */}
+            <h1 className="text-lg text-white font-black tracking-tighter uppercase leading-none">SkyIntel</h1>
+            <span className="text-[10px] text-sky-500 font-bold uppercase tracking-widest">Aviation Intelligence</span>
           </div>
-        </div>
+        </div> */}
 
-        <nav className="flex items-center gap-4 md:gap-8 text-sm font-medium text-[var(--muted-foreground)]">
+        <nav className="flex items-center gap-2 md:gap-4 text-sm font-semibold">
           <button 
             onClick={() => setCurrentTab("map")}
-            className={`flex items-center gap-2 transition-all ${currentTab === "map" ? "text-blue-500 font-bold scale-105" : "hover:text-[var(--foreground)]"}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${currentTab === "map" ? "bg-sky-500 text-white shadow-md " : "text-(--muted-foreground) hover:text-(--foreground) hover:bg-(--muted)"}`}
           >
             <MapIcon className="h-4 w-4" /> <span className="hidden xs:inline">Live Map</span>
           </button>
           <button 
             onClick={() => setCurrentTab("analytics")}
-            className={`flex items-center gap-2 transition-all ${currentTab === "analytics" ? "text-blue-500 font-bold scale-105" : "hover:text-[var(--foreground)]"}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${currentTab === "analytics" ? "bg-sky-500 text-white shadow-md " : currentTab === "map" ? "text-slate-700 hover:text-slate-900 hover:bg-white/45" : "text-(--muted-foreground) hover:text-(--foreground) hover:bg-(--muted)"}`}
           >
             <Activity className="h-4 w-4" /> <span className="hidden xs:inline">Analytics</span>
           </button>
           <button 
             onClick={() => setCurrentTab("alerts")}
-            className={`flex items-center gap-2 transition-all ${currentTab === "alerts" ? "text-blue-500 font-bold scale-105" : "hover:text-[var(--foreground)]"}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${currentTab === "alerts" ? "bg-sky-500 text-white shadow-md " : currentTab === "map" ? "text-slate-700 hover:text-slate-900 hover:bg-white/45" : "text-(--muted-foreground) hover:text-(--foreground) hover:bg-(--muted)"}`}
           >
             <Bell className="h-4 w-4" /> <span className="hidden xs:inline">Alerts</span>
           </button>
         </nav>
 
-        <div className="flex items-center gap-2 md:gap-4">
-          <button 
-            onClick={toggleTheme}
-            className="p-2 hover:bg-[var(--muted)] rounded-full transition-colors border border-[var(--border)]"
-            title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
-          >
-            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          </button>
-        </div>
+        {currentTab !== "map" && (
+          <div className="flex items-center gap-2 md:gap-4">
+            <button 
+              onClick={toggleTheme}
+              className="p-2 rounded-full transition-colors border border-(--border) hover:bg-(--muted)"
+              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+            >
+              {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Main Content Area */}

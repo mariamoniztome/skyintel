@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { useStore, Flight } from "@/src/store/useStore";
-import { Layers, Map as MapIcon, Satellite, Activity, Navigation, CloudRain, ZoomIn, ZoomOut, Maximize2, Filter } from "lucide-react";
+import { Layers, Map as MapIcon, Satellite, Activity, Navigation, CloudRain, ZoomIn, ZoomOut, Maximize2, Filter, Moon, Sun } from "lucide-react";
 import Filters from "./Filters";
 
 // Replace with your actual token or use env
@@ -24,7 +24,7 @@ const FlightMap: React.FC = () => {
   const controlsContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<{ [key: string]: mapboxgl.Marker }>({});
-  const { flights, setSelectedFlightId, riskFilter, searchQuery, theme, selectedFlight } = useStore();
+  const { flights, setSelectedFlightId, riskFilter, searchQuery, theme, selectedFlight, setTheme } = useStore();
   
   const [currentStyle, setCurrentStyle] = useState<MapStyle>("streets-v12");
   const [showTraffic, setShowTraffic] = useState(false);
@@ -467,7 +467,7 @@ const FlightMap: React.FC = () => {
                 <Activity className="h-4 w-4" />
                 <span>Traffic Density</span>
               </div>
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${showTraffic ? "bg-blue-500" : "bg-gray-400"}`}>
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${showTraffic ? "bg-sky-500" : "bg-gray-400"}`}>
                 <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showTraffic ? "right-0.5" : "left-0.5"}`} />
               </div>
             </button>
@@ -480,14 +480,14 @@ const FlightMap: React.FC = () => {
                 <CloudRain className="h-4 w-4" />
                 <span>Weather Radar</span>
               </div>
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${showWeather ? "bg-blue-500" : "bg-gray-400"}`}>
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${showWeather ? "bg-sky-500" : "bg-gray-400"}`}>
                 <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showWeather ? "right-0.5" : "left-0.5"}`} />
               </div>
             </button>
           </div>
         )}
 
-        <div className="rounded-full px-2 py-1 flex items-center gap-1 bg-(--card)/80 backdrop-blur-md border border-(--border) shadow-lg">
+        <div className="rounded-full px-2 py-1 flex items-center gap-1 bg-(--card)/88 backdrop-blur-md border border-(--border) shadow-lg">
           <button onClick={handleZoomIn} title="Zoom in" className="p-2 rounded-full hover:bg-(--muted) transition-colors">
             <ZoomIn className="h-4 w-4" />
           </button>
@@ -520,6 +520,13 @@ const FlightMap: React.FC = () => {
             className={`p-2 rounded-full transition-colors ${isMenuOpen ? "bg-(--muted)" : "hover:bg-(--muted)"}`}
           >
             <Layers className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+            className={`p-2 rounded-full transition-colors ${isMenuOpen ? "bg-(--muted)" : "hover:bg-(--muted)"}`}
+          >
+            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </button>
         </div>
       </div>
