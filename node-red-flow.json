@@ -100,7 +100,7 @@
         "method": "POST",
         "ret": "txt",
         "paytoqs": "ignore",
-        "url": "http://localhost:3000/api/ingest/flights",
+        "url": "http://127.0.0.1:3000/api/ingest/flights",
         "tls": "",
         "persist": false,
         "proxy": "",
