@@ -4,7 +4,7 @@
         "type": "tab",
         "label": "SkyIntel Ingestion",
         "disabled": false,
-        "info": "Flow to fetch flight and weather data, merge them, and send to SkyIntel Backend."
+        "info": "Flow to fetch flight data from OpenSky, process it, and send each flight to the SkyIntel backend."
     },
     {
         "id": "inject_timer",
@@ -39,14 +39,14 @@
         "method": "GET",
         "ret": "obj",
         "paytoqs": "ignore",
-        "url": "https://opensky-network.org/api/states/all",
+        "url": "https://opensky-network.org/api/states/all?lamin=30&lomin=-32&lamax=45&lomax=-1",
         "tls": "",
         "persist": false,
         "proxy": "",
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 330,
+        "x": 310,
         "y": 120,
         "wires": [
             [
@@ -58,14 +58,33 @@
         "id": "process_flights",
         "type": "function",
         "z": "skyintel_ingest_flow",
-        "name": "Merge Weather & Score",
-        "func": "// Mock logic for Node-RED processing\nconst flights = msg.payload;\n\nmsg.payload = flights.map(f => ({\n    id: f.id,\n    callsign: f.callsign,\n    lat: f.lat,\n    lon: f.lon,\n    altitude: f.altitude,\n    speed: f.speed,\n    heading: f.heading,\n    weather: {\n        windSpeed: Math.floor(Math.random() * 50),\n        gust: Math.floor(Math.random() * 70),\n        temperature: -40 - Math.floor(Math.random() * 20),\n        pressure: 1000 + Math.floor(Math.random() * 20),\n        humidity: Math.floor(Math.random() * 100),\n        clouds: Math.floor(Math.random() * 100),\n        precipitation: Math.floor(Math.random() * 10),\n        condition: \"Partly Cloudy\"\n    }\n}));\n\nreturn msg;",
+        "name": "Map States & Add Weather",
+        "func": "// OpenSky returns { states: [[icao24, callsign, ..., lon, lat, baro_alt, ..., velocity, heading, ...]] }\nconst states = msg.payload.states;\nif (!states || !Array.isArray(states)) {\n    node.warn('No states array in OpenSky response');\n    return null;\n}\n\nmsg.payload = states\n    .filter(s => s[5] !== null && s[6] !== null)\n    .map(s => ({\n        id: s[0],\n        callsign: (s[1] || s[0]).trim(),\n        lon: s[5],\n        lat: s[6],\n        altitude: s[7] ? s[7] * 3.28084 : 0,\n        speed: s[9] ? s[9] * 1.94384 : 0,\n        heading: s[10] || 0,\n        weather: {\n            windSpeed: Math.floor(Math.random() * 50),\n            gust: Math.floor(Math.random() * 70),\n            temperature: -40 - Math.floor(Math.random() * 20),\n            pressure: 1000 + Math.floor(Math.random() * 20),\n            humidity: Math.floor(Math.random() * 100),\n            clouds: Math.floor(Math.random() * 100),\n            precipitation: Math.floor(Math.random() * 10),\n            condition: \"Partly Cloudy\"\n        }\n    }));\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 580,
+        "x": 540,
+        "y": 120,
+        "wires": [
+            [
+                "split_flights"
+            ]
+        ]
+    },
+    {
+        "id": "split_flights",
+        "type": "split",
+        "z": "skyintel_ingest_flow",
+        "name": "One flight per msg",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 760,
         "y": 120,
         "wires": [
             [
@@ -81,14 +100,21 @@
         "method": "POST",
         "ret": "txt",
         "paytoqs": "ignore",
-        "url": "https://opensky-network.org/api/states/all",
+        "url": "http://localhost:3000/api/ingest/flights",
         "tls": "",
         "persist": false,
         "proxy": "",
         "authType": "",
         "senderr": false,
-        "headers": [],
-        "x": 820,
+        "headers": [
+            {
+                "keyType": "str",
+                "keyValue": "Content-Type",
+                "valueType": "str",
+                "valueValue": "application/json"
+            }
+        ],
+        "x": 980,
         "y": 120,
         "wires": [
             [
@@ -108,7 +134,7 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1020,
+        "x": 1180,
         "y": 120,
         "wires": []
     }
