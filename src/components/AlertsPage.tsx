@@ -1,15 +1,25 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/src/store/useStore";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Badge } from "@/src/components/ui/badge";
 import { Bell, Clock, MapPin, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const AlertsPage: React.FC = () => {
   const { alerts, flights } = useStore();
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState<"all" | "warning" | "critical">("all");
   const [minScore, setMinScore] = useState(0);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const getFlightDetails = (flightId: string) => {
     return flights.find(f => f.id === flightId);
@@ -34,6 +44,27 @@ const AlertsPage: React.FC = () => {
       return matchesQuery && matchesSeverity && matchesScore;
     });
   }, [alerts, flights, search, severityFilter, minScore]);
+
+  const totalPages = Math.ceil(
+  filteredAlerts.length / PAGE_SIZE
+);
+
+  const paginatedAlerts = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+
+    return filteredAlerts.slice(
+      start,
+      start + PAGE_SIZE
+    );
+  }, [filteredAlerts, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    search,
+    severityFilter,
+    minScore,
+  ]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -101,7 +132,7 @@ const AlertsPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="xl:col-span-2 space-y-4">
-            {filteredAlerts.map((alert) => {
+            {paginatedAlerts.map((alert) => {
               const flight = getFlightDetails(alert.flight_id);
               return (
                 <Card key={alert.id} className="border-[var(--border)] bg-[var(--card)] hover:border-rose-500/30 transition-all shadow-sm group overflow-hidden">
@@ -165,7 +196,59 @@ const AlertsPage: React.FC = () => {
               );
             })}
           </div>
+          {totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage((p) => Math.max(1, p - 1));
+                      }}
+                    />
+                  </PaginationItem>
 
+                  {Array.from(
+                    { length: totalPages },
+                    (_, i) => i + 1
+                  )
+                    .slice(
+                      Math.max(0, page - 3),
+                      Math.min(totalPages, page + 2)
+                    )
+                    .map((pageNumber) => (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          href="#"
+                          isActive={pageNumber === page}
+                          className="text-[var(--foreground)]"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPage(pageNumber);
+                          }}
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage((p) =>
+                          Math.min(totalPages, p + 1)
+                        );
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
           {/* Sidebar Stats for Alerts */}
           {/* <div className="space-y-6">
             <Card className="border-[var(--border)] bg-[var(--card)] shadow-sm">
