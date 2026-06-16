@@ -9,8 +9,21 @@ router.get("/flights", (req, res) => {
   const flights = db.prepare(`
     SELECT f.*, w.wind_speed, w.gust, w.temperature, w.pressure, w.humidity, w.clouds, w.precipitation, w.condition, t.score as turbulenceScore, t.risk_level as riskLevel
     FROM flights f
-    LEFT JOIN weather_snapshots w ON f.id = w.flight_id AND w.id = (SELECT MAX(id) FROM weather_snapshots WHERE flight_id = f.id)
-    LEFT JOIN turbulence_history t ON f.id = t.flight_id AND t.id = (SELECT MAX(id) FROM turbulence_history WHERE flight_id = f.id)
+    LEFT JOIN weather_snapshots w
+      ON f.id = w.flight_id
+      AND w.id = (
+        SELECT MAX(id)
+        FROM weather_snapshots
+        WHERE flight_id = f.id
+      )
+    LEFT JOIN turbulence_history t
+      ON f.id = t.flight_id
+      AND t.id = (
+        SELECT MAX(id)
+        FROM turbulence_history
+        WHERE flight_id = f.id
+      )
+    WHERE f.last_updated >= datetime('now', '-10 minutes')
   `).all();
   res.json(flights);
 });
