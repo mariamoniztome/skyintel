@@ -47,10 +47,42 @@ router.get("/flights/:id", (req, res) => {
   res.json({ ...(flight as object), history });
 });
 
+// GET /api/health
+router.get("/health", (req, res) => {
+  try {
+    db.prepare("SELECT 1").get();
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(503).json({ status: "error", message: (err as Error).message });
+  }
+});
+
 // GET /api/alerts
 router.get("/alerts", (req, res) => {
   const alerts = db.prepare("SELECT * FROM alerts ORDER BY timestamp DESC LIMIT 50").all();
   res.json(alerts);
+});
+
+// POST /api/alerts (Node-RED severe weather alerts)
+router.post("/alerts", (req, res) => {
+  const { flightId, callsign, message, score } = req.body;
+
+  if (!flightId || !message) {
+    return res.status(400).json({ error: "Missing flightId or message" });
+  }
+
+  // Ensure the flight row exists so the FK constraint is satisfied
+  db.prepare(`
+    INSERT OR IGNORE INTO flights (id, callsign, lat, lon, altitude, speed, heading, last_updated)
+    VALUES (?, ?, 0, 0, 0, 0, 0, CURRENT_TIMESTAMP)
+  `).run(flightId, callsign || flightId);
+
+  db.prepare(`
+    INSERT INTO alerts (flight_id, message, score)
+    VALUES (?, ?, ?)
+  `).run(flightId, message, score ?? 0);
+
+  res.json({ status: "ok" });
 });
 
 // POST /api/ingest/flights (Node-RED Integration)
@@ -99,6 +131,14 @@ router.post("/ingest/flights", (req, res) => {
   }
 
   res.json({ status: "success" });
+});
+
+// DELETE /api/flights/stale (Node-RED hourly cleanup)
+router.delete("/flights/stale", (req, res) => {
+  const result = db.prepare(`
+    DELETE FROM flights WHERE last_updated < datetime('now', '-30 minutes')
+  `).run();
+  res.json({ status: "ok", deleted: result.changes });
 });
 
 export default router;
