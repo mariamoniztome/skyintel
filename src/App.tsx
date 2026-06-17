@@ -77,7 +77,7 @@ export default function App() {
         ) : (
           <div className="flex-1 overflow-y-auto p-6 pt-24">
             <div className="max-w-[1600px] mx-auto">
-              {currentTab === "analytics" ? <AnalyticsTab /> : <AlertsPage />}
+              {currentTab === "analytics" ? <AnalyticsTab /> : <AlertsPage onLocateFlight={(flightId) => { setSelectedFlightId(flightId); setCurrentTab("map"); }}/>}
             </div>
           </div>
         )}

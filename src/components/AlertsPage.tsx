@@ -13,8 +13,12 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const AlertsPage: React.FC = () => {
-  const { alerts, flights } = useStore();
+interface AlertsPageProps {
+  onLocateFlight: (flightId: string) => void;
+}
+
+const AlertsPage: React.FC<AlertsPageProps> = ({ onLocateFlight }) => {
+  const { alerts, flights, setSelectedFlightId } = useStore();
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState<"all" | "warning" | "critical">("all");
   const [minScore, setMinScore] = useState(0);
@@ -95,7 +99,7 @@ const AlertsPage: React.FC = () => {
           className="h-10 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
         >
           <option value="all">All Severities</option>
-          <option value="warning">Warning (50-79)</option>
+          <option value="warning">Warning (61-79)</option>
           <option value="critical">Critical (80+)</option>
         </select>
         <input
@@ -183,8 +187,9 @@ const AlertsPage: React.FC = () => {
                       </div>
 
                       <div className="md:w-48 flex flex-col justify-center gap-3 border-t md:border-t-0 md:border-l border-[var(--border)] pt-4 md:pt-0 md:pl-6">
-                        <button className="w-full py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2">
-                          <MapPin className="h-3 w-3" /> Locate on Map
+                        <button onClick={() => { onLocateFlight(alert.flight_id); }} className="w-full py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2">
+                          <MapPin className="h-3 w-3" />
+                          Locate on Map
                         </button>
                         <button className="w-full py-2 rounded-lg border border-[var(--border)] hover:bg-[var(--muted)] text-[var(--foreground)] text-xs font-bold transition-colors">
                           View History

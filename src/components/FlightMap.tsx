@@ -110,14 +110,20 @@ const FlightMap: React.FC = () => {
     });
     resizeObserver.observe(mapContainer.current);
 
-    map.current.on('style.load', () => {
+    map.current.on("style.load", () => {
       if (showTraffic) {
         addTrafficLayer();
       }
+
       if (showWeather) {
         addWeatherLayer();
       }
-      if (selectedFlight?.history) {
+
+      if (
+        selectedFlight &&
+        selectedFlight.history &&
+        selectedFlight.history.length > 1
+      ) {
         drawFlightPath(selectedFlight);
       }
     });
@@ -216,6 +222,10 @@ const FlightMap: React.FC = () => {
   };
 
   const drawFlightPath = (flight: Flight) => {
+    if (!map.current?.isStyleLoaded()) {
+      return;
+    }
+
     if (!map.current || !flight.history || flight.history.length < 2) {
       removeFlightPath();
       return;
@@ -316,10 +326,20 @@ const FlightMap: React.FC = () => {
 
   useEffect(() => {
     if (!map.current) return;
-    if (selectedFlight) {
-      drawFlightPath(selectedFlight);
-    } else {
+
+    if (!selectedFlight) {
       removeFlightPath();
+      return;
+    }
+
+    const drawWhenReady = () => {
+      drawFlightPath(selectedFlight);
+    };
+
+    if (map.current.isStyleLoaded()) {
+      drawWhenReady();
+    } else {
+      map.current.once("style.load", drawWhenReady);
     }
   }, [selectedFlight]);
 
@@ -434,6 +454,17 @@ const FlightMap: React.FC = () => {
       }
     });
   }, [flights, riskFilter, searchQuery, setSelectedFlightId]);
+
+  useEffect(() => {
+    if (!map.current || !selectedFlight) return;
+
+    map.current.flyTo({
+      center: [selectedFlight.lon, selectedFlight.lat],
+      zoom: 7,
+      duration: 1500,
+      essential: true
+    });
+  }, [selectedFlight]);
 
   return (
     <div className="relative w-full h-full min-h-100 overflow-hidden border border-(--border) shadow-2xl">

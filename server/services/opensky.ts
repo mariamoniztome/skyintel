@@ -116,7 +116,7 @@ function processFlight(id: string, callsign: string, lat: number, lon: number, a
   `).run(id, score, riskLevel, altitude, lat, lon);
 
   // Generate Alert if high risk
-  if (score >= 70) {
+  if (score >= 61) {
     db.prepare(`
       INSERT INTO alerts (flight_id, message, score)
       VALUES (?, ?, ?)

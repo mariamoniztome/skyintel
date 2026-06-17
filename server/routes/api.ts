@@ -59,7 +59,14 @@ router.get("/health", (req, res) => {
 
 // GET /api/alerts
 router.get("/alerts", (req, res) => {
-  const alerts = db.prepare("SELECT * FROM alerts ORDER BY timestamp DESC LIMIT 50").all();
+  const alerts = db.prepare(`
+    SELECT *
+    FROM alerts
+    WHERE timestamp >= datetime('now', '-1 hour')
+    ORDER BY timestamp DESC
+    LIMIT 50
+  `).all();
+
   res.json(alerts);
 });
 
@@ -122,7 +129,7 @@ router.post("/ingest/flights", (req, res) => {
     `).run(id, score, riskLevel, altitude, lat, lon);
 
     // Generate Alert if high risk
-    if (score >= 70) {
+    if (score >= 61) {
       db.prepare(`
         INSERT INTO alerts (flight_id, message, score)
         VALUES (?, ?, ?)
