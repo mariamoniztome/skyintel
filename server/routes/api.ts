@@ -155,4 +155,9 @@ router.delete("/flights/stale", (req, res) => {
   res.json({ status: "ok", deleted: result.changes });
 });
 
+router.delete("/alerts", (req, res) => {
+  db.prepare("DELETE FROM alerts").run();
+  res.json({ status: "ok" });
+});
+
 export default router;
