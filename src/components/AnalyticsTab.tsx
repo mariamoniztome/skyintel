@@ -3,7 +3,7 @@ import { useStore } from "@/src/store/useStore";
 import StatsCards from "@/src/components/StatsCards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/src/components/ui/pagination";
 
 const AnalyticsTab: React.FC = () => {
   const { flights, theme } = useStore();
