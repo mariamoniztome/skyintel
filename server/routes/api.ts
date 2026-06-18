@@ -62,7 +62,6 @@ router.get("/alerts", (req, res) => {
   const alerts = db.prepare(`
     SELECT *
     FROM alerts
-    WHERE timestamp >= datetime('now', '-1 hour')
     ORDER BY timestamp DESC
     LIMIT 50
   `).all();
@@ -118,8 +117,16 @@ router.post("/ingest/flights", (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, weather.windSpeed, weather.gust, weather.temperature, weather.pressure, weather.humidity, weather.clouds, weather.precipitation, weather.condition);
 
+    console.log(
+      callsign,
+      weather.windSpeed,
+      weather.gust,
+      weather.clouds,
+      altitude,
+      speed
+    );
     // Calculate Turbulence
-    const score = calculateTurbulence(weather, altitude);
+    const score = calculateTurbulence(weather, altitude, speed);
     const riskLevel = score <= 30 ? "low" : score <= 60 ? "medium" : "high";
 
     // Insert Turbulence History
