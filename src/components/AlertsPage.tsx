@@ -4,8 +4,8 @@ import { Card, CardContent } from "@/src/components/ui/card";
 import { Badge } from "@/src/components/ui/badge";
 import { Bell, Clock, MapPin, ShieldAlert, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import {Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/src/components/ui/pagination";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/src/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, } from "recharts";
 
 interface AlertsPageProps {
