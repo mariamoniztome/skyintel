@@ -15,20 +15,41 @@ const AnalyticsTab: React.FC = () => {
   const PAGE_SIZE = 25;
 
   const filteredFlights = useMemo(() => {
-    const query = search.trim().toLowerCase();
+      const query = search.trim().toLowerCase();
 
-    return flights.filter((f) => {
-      const matchesSearch =
-        query.length === 0 ||
-        f.id.toLowerCase().includes(query) ||
-        (f.callsign ?? "").toLowerCase().includes(query);
+      const safeMin = Math.min(minAltitude, maxAltitude);
+      const safeMax = Math.max(minAltitude, maxAltitude);
 
-      const matchesRisk = riskFilter === "all" ? true : f.riskLevel === riskFilter;
-      const matchesAltitude = f.altitude >= minAltitude && f.altitude <= maxAltitude;
+      return flights.filter((f) => {
+        const altitude = Math.max(0, f.altitude ?? 0);
 
-      return matchesSearch && matchesRisk && matchesAltitude;
-    });
-  }, [flights, search, riskFilter, minAltitude, maxAltitude]);
+        const matchesSearch =
+          query.length === 0 ||
+          f.id.toLowerCase().includes(query) ||
+          (f.callsign ?? "").toLowerCase().includes(query);
+
+        const matchesRisk =
+          riskFilter === "all"
+            ? true
+            : f.riskLevel === riskFilter;
+
+        const matchesAltitude =
+          altitude >= safeMin &&
+          altitude <= safeMax;
+
+        return (
+          matchesSearch &&
+          matchesRisk &&
+          matchesAltitude
+        );
+      });
+    }, [
+      flights,
+      search,
+      riskFilter,
+      minAltitude,
+      maxAltitude,
+    ]);
 
   const totalPages = Math.ceil(
   filteredFlights.length / PAGE_SIZE
@@ -205,7 +226,7 @@ const AnalyticsTab: React.FC = () => {
                   <tr key={f.id} className="hover:bg-[var(--muted)] transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-gray-600">{f.id}</td>
                     <td className="px-4 py-3 font-bold text-gray-600">{f.callsign}</td>
-                    <td className="px-4 py-3 text-gray-600">{f.altitude.toLocaleString()} ft</td>
+                    <td className="px-4 py-3 text-gray-600">{Math.max(0, f.altitude).toLocaleString()} ft</td>
                     <td className="px-4 py-3 text-gray-600">{f.speed} kts</td>
                     <td className="px-4 py-3 text-gray-600">
                       <div className="flex items-center gap-2 text-gray-600">
