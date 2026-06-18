@@ -132,8 +132,8 @@ The resulting score is classified into:
 
 ## Authors
 
-Maria João Tomé
-Rui Ramos
+- [Maria João Tomé](https://github.com/mariamoniztome)
+- [Rui Ramos](https://github.com/ruiiramos)
 
 ## Academic Context
 
