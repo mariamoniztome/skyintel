@@ -147,6 +147,41 @@ router.post("/ingest/flights", (req, res) => {
   res.json({ status: "success" });
 });
 
+// GET /api/flights/:id/route — real departure/arrival from OpenSky
+router.get("/flights/:id/route", async (req, res) => {
+  const icao24 = req.params.id.toLowerCase();
+  const now = Math.floor(Date.now() / 1000);
+  const begin = now - 86400;
+
+  const clientId = process.env.OPENSKY_CLIENT_ID || "";
+  const clientSecret = process.env.OPENSKY_CLIENT_SECRET || "";
+  const headers: Record<string, string> = {};
+  if (clientId && clientSecret) {
+    headers["Authorization"] =
+      "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  }
+
+  try {
+    const response = await fetch(
+      `https://opensky-network.org/api/flights/aircraft?icao24=${icao24}&begin=${begin}&end=${now}`,
+      { headers }
+    );
+    if (!response.ok) return res.json({ departure: null, arrival: null });
+
+    const flights = (await response.json()) as any[];
+    if (!Array.isArray(flights) || flights.length === 0)
+      return res.json({ departure: null, arrival: null });
+
+    const latest = flights[flights.length - 1];
+    res.json({
+      departure: latest.estDepartureAirport || null,
+      arrival: latest.estArrivalAirport || null,
+    });
+  } catch {
+    res.json({ departure: null, arrival: null });
+  }
+});
+
 // DELETE /api/flights/stale (Node-RED hourly cleanup)
 router.delete("/flights/stale", (req, res) => {
   const result = db.prepare(`

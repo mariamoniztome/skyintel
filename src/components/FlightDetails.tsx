@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 type AirportRef = {
   iata: string;
+  icao: string;
   city: string;
   name: string;
   lat: number;
@@ -14,16 +15,53 @@ type AirportRef = {
 };
 
 const AIRPORT_REFERENCES: AirportRef[] = [
-  { iata: "OPO", city: "Porto", name: "Francisco Sa Carneiro", lat: 41.2481, lon: -8.6814 },
-  { iata: "LIS", city: "Lisbon", name: "Humberto Delgado", lat: 38.7742, lon: -9.1342 },
-  { iata: "FAO", city: "Faro", name: "Faro Airport", lat: 37.0144, lon: -7.9659 },
-  { iata: "MAD", city: "Madrid", name: "Adolfo Suarez Madrid-Barajas", lat: 40.4722, lon: -3.5609 },
-  { iata: "BCN", city: "Barcelona", name: "Barcelona El Prat", lat: 41.2974, lon: 2.0833 },
-  { iata: "LUX", city: "Luxembourg", name: "Luxembourg Airport", lat: 49.6233, lon: 6.2044 },
-  { iata: "CDG", city: "Paris", name: "Charles de Gaulle", lat: 49.0097, lon: 2.5479 },
-  { iata: "LHR", city: "London", name: "Heathrow", lat: 51.47, lon: -0.4543 },
-  { iata: "AMS", city: "Amsterdam", name: "Schiphol", lat: 52.31, lon: 4.7683 },
-  { iata: "FRA", city: "Frankfurt", name: "Frankfurt Airport", lat: 50.0379, lon: 8.5622 },
+  { iata: "OPO", icao: "LPPR", city: "Porto", name: "Francisco Sa Carneiro", lat: 41.2481, lon: -8.6814 },
+  { iata: "LIS", icao: "LPPT", city: "Lisbon", name: "Humberto Delgado", lat: 38.7742, lon: -9.1342 },
+  { iata: "FAO", icao: "LPFR", city: "Faro", name: "Faro Airport", lat: 37.0144, lon: -7.9659 },
+  { iata: "MAD", icao: "LEMD", city: "Madrid", name: "Adolfo Suarez Madrid-Barajas", lat: 40.4722, lon: -3.5609 },
+  { iata: "BCN", icao: "LEBL", city: "Barcelona", name: "Barcelona El Prat", lat: 41.2974, lon: 2.0833 },
+  { iata: "LUX", icao: "ELLX", city: "Luxembourg", name: "Luxembourg Airport", lat: 49.6233, lon: 6.2044 },
+  { iata: "CDG", icao: "LFPG", city: "Paris", name: "Charles de Gaulle", lat: 49.0097, lon: 2.5479 },
+  { iata: "LHR", icao: "EGLL", city: "London", name: "Heathrow", lat: 51.47, lon: -0.4543 },
+  { iata: "AMS", icao: "EHAM", city: "Amsterdam", name: "Schiphol", lat: 52.31, lon: 4.7683 },
+  { iata: "FRA", icao: "EDDF", city: "Frankfurt", name: "Frankfurt Airport", lat: 50.0379, lon: 8.5622 },
+  { iata: "MXP", icao: "LIMC", city: "Milan", name: "Malpensa", lat: 45.6306, lon: 8.7281 },
+  { iata: "FCO", icao: "LIRF", city: "Rome", name: "Fiumicino", lat: 41.8003, lon: 12.2389 },
+  { iata: "BRU", icao: "EBBR", city: "Brussels", name: "Brussels Airport", lat: 50.9014, lon: 4.4844 },
+  { iata: "VIE", icao: "LOWW", city: "Vienna", name: "Vienna Airport", lat: 48.1103, lon: 16.5697 },
+  { iata: "ZRH", icao: "LSZH", city: "Zurich", name: "Zurich Airport", lat: 47.4647, lon: 8.5492 },
+  { iata: "DUB", icao: "EIDW", city: "Dublin", name: "Dublin Airport", lat: 53.4213, lon: -6.2701 },
+  { iata: "GRU", icao: "SBGR", city: "São Paulo", name: "Guarulhos", lat: -23.4356, lon: -46.4731 },
+  { iata: "JFK", icao: "KJFK", city: "New York", name: "John F. Kennedy", lat: 40.6413, lon: -73.7781 },
+  { iata: "EZE", icao: "SAEZ", city: "Buenos Aires", name: "Ezeiza", lat: -34.8222, lon: -58.5358 },
+  { iata: "CMN", icao: "GMMN", city: "Casablanca", name: "Mohammed V", lat: 33.3675, lon: -7.5897 },
+  // Açores
+  { iata: "PDL", icao: "LPPD", city: "Ponta Delgada", name: "João Paulo II", lat: 37.7412, lon: -25.6979 },
+  { iata: "TER", icao: "LPLA", city: "Lajes (Terceira)", name: "Lajes Field", lat: 38.7617, lon: -27.0908 },
+  { iata: "HOR", icao: "LPHR", city: "Horta (Faial)", name: "Horta Airport", lat: 38.5199, lon: -28.7159 },
+  { iata: "FLW", icao: "LPFL", city: "Flores Island", name: "Flores Airport", lat: 39.4553, lon: -31.1314 },
+  { iata: "SMA", icao: "LPAZ", city: "Santa Maria", name: "Santa Maria Airport", lat: 36.9714, lon: -25.1707 },
+  { iata: "PIX", icao: "LPPI", city: "Pico Island", name: "Pico Airport", lat: 38.5543, lon: -28.4413 },
+  { iata: "SJZ", icao: "LPSJ", city: "São Jorge", name: "São Jorge Airport", lat: 38.6655, lon: -28.1758 },
+  { iata: "GRW", icao: "LPGR", city: "Graciosa", name: "Graciosa Airport", lat: 39.0922, lon: -28.0298 },
+  // Madeira
+  { iata: "FNC", icao: "LPMA", city: "Funchal", name: "Madeira Airport", lat: 32.6979, lon: -16.7745 },
+  { iata: "PXO", icao: "LPPS", city: "Porto Santo", name: "Porto Santo Airport", lat: 33.0734, lon: -16.3500 },
+];
+
+type Region = { name: string; latMin: number; latMax: number; lonMin: number; lonMax: number };
+
+const REGIONS: Region[] = [
+  { name: "Over the Azores", latMin: 36.9, latMax: 39.8, lonMin: -31.5, lonMax: -24.9 },
+  { name: "Over Madeira", latMin: 32.4, latMax: 33.2, lonMin: -17.3, lonMax: -16.2 },
+  { name: "Over Portugal", latMin: 36.9, latMax: 42.2, lonMin: -9.6, lonMax: -6.1 },
+  { name: "Over Morocco", latMin: 27.7, latMax: 35.9, lonMin: -13.2, lonMax: -0.9 },
+  { name: "Over the Bay of Biscay", latMin: 43.5, latMax: 48.0, lonMin: -9.5, lonMax: -1.0 },
+  { name: "Over Spain", latMin: 35.9, latMax: 43.8, lonMin: -9.3, lonMax: 3.3 },
+  { name: "Over France", latMin: 42.3, latMax: 51.1, lonMin: -4.8, lonMax: 8.2 },
+  { name: "Over Germany", latMin: 47.3, latMax: 55.0, lonMin: 6.0, lonMax: 15.0 },
+  { name: "Over the UK", latMin: 49.9, latMax: 60.8, lonMin: -8.0, lonMax: 1.8 },
+  { name: "Over the Atlantic Ocean", latMin: 27.0, latMax: 50.0, lonMin: -37.0, lonMax: -9.6 },
 ];
 
 const EARTH_RADIUS_KM = 6371;
@@ -51,9 +89,28 @@ function resolveNearestAirport(lat: number, lon: number) {
   return nearest;
 }
 
+function resolveAirportByIcao(icao: string | null): string | null {
+  if (!icao) return null;
+  const found = AIRPORT_REFERENCES.find(a => a.icao === icao.toUpperCase());
+  return found ? `${found.city} (${found.iata})` : icao;
+}
+
 const FlightDetails: React.FC = () => {
   const { selectedFlightId, flights, setSelectedFlightId, theme, selectedFlight } = useStore();
-  
+  const [realRoute, setRealRoute] = React.useState<{ departure: string | null; arrival: string | null } | null>(null);
+
+  React.useEffect(() => {
+    if (!selectedFlightId) { setRealRoute(null); return; }
+    setRealRoute(null);
+    fetch(`/api/flights/${selectedFlightId}/route`)
+      .then(r => r.json())
+      .then(data => setRealRoute({
+        departure: resolveAirportByIcao(data.departure),
+        arrival: resolveAirportByIcao(data.arrival),
+      }))
+      .catch(() => setRealRoute(null));
+  }, [selectedFlightId]);
+
   const flight = flights.find(f => f.id === selectedFlightId);
 
   if (!selectedFlightId || !flight) return null;
@@ -64,8 +121,6 @@ const FlightDetails: React.FC = () => {
   const latestTrackedPoint = history[history.length - 1] ?? null;
   const trackingStartedAt = firstTrackedPoint?.timestamp ?? null;
   const lastSeenAt = latestTrackedPoint?.timestamp ?? selectedFlight?.last_updated ?? flight.last_updated ?? null;
-  const isLikelyLanded = flight.altitude < 2000 && flight.speed < 80;
-
   const formatDateTime = (value: string | null) => {
     if (!value) return "Not available";
     const parsed = new Date(value);
@@ -78,29 +133,28 @@ const FlightDetails: React.FC = () => {
     });
   };
 
-  const formatPosition = (lat: number, lon: number) => {
-    const latLabel = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"}`;
-    const lonLabel = `${Math.abs(lon).toFixed(2)}°${lon >= 0 ? "E" : "W"}`;
-    return `${latLabel}, ${lonLabel}`;
-  };
-
-  const formatLocationLabel = (lat: number, lon: number) => {
+  const resolveLocation = (lat: number, lon: number): string => {
     const nearest = resolveNearestAirport(lat, lon);
-    if (!nearest) return formatPosition(lat, lon);
-    return `${nearest.airport.city} (${nearest.airport.iata})`;
+    if (nearest) return `${nearest.airport.city} (${nearest.airport.iata})`;
+    for (const region of REGIONS) {
+      if (lat >= region.latMin && lat <= region.latMax && lon >= region.lonMin && lon <= region.lonMax) {
+        return region.name;
+      }
+    }
+    return lon < -10 ? "Over the Atlantic Ocean" : "Unknown area";
   };
 
-  const departurePosition = firstTrackedPoint
-    ? formatLocationLabel(firstTrackedPoint.lat, firstTrackedPoint.lon)
-    : "Not available from live feed";
+  const getCompassDir = (deg: number) => {
+    const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    return dirs[Math.round(deg / 45) % 8];
+  };
 
-  const arrivalStatus = isLikelyLanded
-    ? `Likely landed near ${formatLocationLabel(flight.lat, flight.lon)}`
-    : "In flight (arrival location/time not available yet)";
-
-  const routeLabel = firstTrackedPoint
-    ? `${formatLocationLabel(firstTrackedPoint.lat, firstTrackedPoint.lon)} -> ${formatLocationLabel(flight.lat, flight.lon)}`
-    : "Route unavailable";
+  const routeLabel =
+    realRoute === null
+      ? null
+      : realRoute.departure || realRoute.arrival
+      ? `${realRoute.departure ?? "?"} → ${realRoute.arrival ?? "In flight"}`
+      : null;
 
   return (
     <Card className="fixed right-6 top-24 bottom-6 w-[400px] z-50 overflow-y-auto border-none bg-[var(--card)]/95 backdrop-blur-2xl rounded-[32px] animate-in slide-in-from-right duration-500">
@@ -127,33 +181,34 @@ const FlightDetails: React.FC = () => {
             <div className="flex items-start gap-3">
               <PlaneTakeoff className="h-4 w-4 mt-0.5 text-sky-500" />
               <div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Route (Approx.)</div>
-                <div className="font-semibold">{routeLabel}</div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Route</div>
+                <div className="font-semibold">
+                  {realRoute === null ? (
+                    <span className="opacity-40 italic text-xs">Fetching…</span>
+                  ) : routeLabel ? (
+                    routeLabel
+                  ) : (
+                    <span className="opacity-40 italic text-xs">Not available</span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <PlaneTakeoff className="h-4 w-4 mt-0.5 text-sky-500" />
+              <MapPin className="h-4 w-4 mt-0.5 text-rose-500" />
               <div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Departure (Approx.)</div>
-                <div className="font-semibold">{departurePosition}</div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Current Position</div>
+                <div className="font-semibold">{resolveLocation(flight.lat, flight.lon)}</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Clock3 className="h-4 w-4 mt-0.5 text-amber-500" />
               <div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Tracking Started</div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Tracking Since</div>
                 <div className="font-semibold">{formatDateTime(trackingStartedAt)}</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <PlaneLanding className="h-4 w-4 mt-0.5 text-emerald-500" />
-              <div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Arrival Status</div>
-                <div className="font-semibold">{arrivalStatus}</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <MapPin className="h-4 w-4 mt-0.5 text-rose-500" />
               <div>
                 <div className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">Last Seen</div>
                 <div className="font-semibold">{formatDateTime(lastSeenAt)}</div>
@@ -193,13 +248,13 @@ const FlightDetails: React.FC = () => {
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
               <Navigation className="h-3 w-3" /> Heading
             </div>
-            <div className="text-xl font-medium text-[var(--foreground)]">{Math.round(flight.heading)}<span className="text-xs opacity-40">°</span></div>
+            <div className="text-xl font-medium text-[var(--foreground)]">{getCompassDir(flight.heading)} <span className="text-xs opacity-40">{Math.round(flight.heading)}°</span></div>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
-              <Activity className="h-3 w-3" /> Position
+              <MapPin className="h-3 w-3" /> Position
             </div>
-            <div className="text-xs font-mono text-[var(--foreground)] opacity-80">{flight.lat.toFixed(2)}°, {flight.lon.toFixed(2)}°</div>
+            <div className="text-sm font-medium text-[var(--foreground)]">{resolveLocation(flight.lat, flight.lon)}</div>
           </div>
         </div>
 
