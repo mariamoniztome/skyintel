@@ -4,50 +4,25 @@ import { calculateTurbulence } from "../utils/turbulence.js";
 
 const OPENSKY_URL = "https://opensky-network.org/api/states/all";
 
-type RegionBox = {
-  name: string;
-  lamin: number;
-  lomin: number;
-  lamax: number;
-  lomax: number;
-};
-
-const TARGET_REGIONS: RegionBox[] = [
-  // Mainland Portugal + western Spain buffer.
-  { name: "iberia-west", lamin: 35.0, lomin: -10.5, lamax: 44.5, lomax: -1.5 },
-  { name: "madeira", lamin: 32.0, lomin: -18.8, lamax: 34.0, lomax: -15.0 },
-  { name: "azores", lamin: 36.0, lomin: -31.8, lamax: 40.8, lomax: -24.0 },
-];
-
-function isInTargetRegions(lat: number, lon: number): boolean {
-  return TARGET_REGIONS.some(region =>
-    lat >= region.lamin &&
-    lat <= region.lamax &&
-    lon >= region.lomin &&
-    lon <= region.lomax,
-  );
-}
+// Matches the map's EXPLORE_BOUNDS: lon -37→6, lat 27→47
+const MAP_BOUNDS = { lamin: 27, lomin: -37, lamax: 47, lomax: 6 };
 
 export async function fetchOpenSkyData() {
   try {
-    console.log("Fetching data from OpenSky (Portugal, Madeira, Azores + nearby Spain)...");
-    // Coarse envelope, then strict filtering against target region boxes.
-    const response = await axios.get(`${OPENSKY_URL}?lamin=30&lomin=-32&lamax=45&lomax=-1`, {
-      timeout: 30000
-    });
+    const { lamin, lomin, lamax, lomax } = MAP_BOUNDS;
+    console.log("Fetching data from OpenSky (full map area)...");
+    const response = await axios.get(
+      `${OPENSKY_URL}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`,
+      { timeout: 30000 }
+    );
     console.log("OpenSky response received");
     const states = response.data.states;
     if (!states || !Array.isArray(states)) {
-      console.log("No flights received from OpenSky for Portugal/Madeira/Azores region.");
+      console.log("No flights received from OpenSky.");
       return;
     }
 
-    const filteredStates = states.filter((s: any[]) => {
-      const lon = s[5];
-      const lat = s[6];
-      if (lat === null || lon === null) return false;
-      return isInTargetRegions(lat, lon);
-    });
+    const filteredStates = (states as any[][]).filter(s => s[5] !== null && s[6] !== null);
 
     db.prepare("DELETE FROM alerts").run();
 
