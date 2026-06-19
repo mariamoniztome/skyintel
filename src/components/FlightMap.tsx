@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { useStore, Flight } from "@/src/store/useStore";
-import { Layers, Map as MapIcon, Satellite, Activity, Navigation, CloudRain, ZoomIn, ZoomOut, Maximize2, Filter, Moon, Sun } from "lucide-react";
+import { Layers, Map as MapIcon, Satellite, Activity, Navigation, ZoomIn, ZoomOut, Maximize2, Filter, Moon, Sun } from "lucide-react";
 import Filters from "./Filters";
 
 // Replace with your actual token or use env
 const MAPBOX_TOKEN = (import.meta as any).env.VITE_MAPBOX_ACCESS_TOKEN || "pk.eyJ1IjoibWFyaWFqbW9uaXp0b21lIiwiYSI6ImNtbjM1M2p3bzE0bzgyc3FzMm50OTFiNXYifQ.c2jZXmW-MNuxvJgiuda7fw";
 
-type MapStyle = "streets-v12" | "satellite-v9" | "dark-v11" | "light-v11";
+type MapStyle = "streets-v12" | "satellite-v9" | "dark-v11" | "outdoors-v12";
 
 const INITIAL_VIEW_BOUNDS: mapboxgl.LngLatBoundsLike = [
   [-31.8, 32.0],
@@ -28,10 +28,10 @@ const FlightMap: React.FC = () => {
   
   const [currentStyle, setCurrentStyle] = useState<MapStyle>("streets-v12");
   const [showTraffic, setShowTraffic] = useState(false);
-  const [showWeather, setShowWeather] = useState(false);
+  const showTrafficRef = useRef(false);
+  const selectedFlightRef = useRef<Flight | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [weatherTimestamp, setWeatherTimestamp] = useState<number | null>(null);
 
   const clearAllMarkers = () => {
     Object.values(markers.current).forEach((marker: mapboxgl.Marker) => marker.remove());
@@ -53,39 +53,6 @@ const FlightMap: React.FC = () => {
       icon.style.transform = `rotate(${getSafeHeading(heading)}deg)`;
     }
   };
-
-  useEffect(() => {
-    // Fetch latest weather timestamp from RainViewer - refresh every 5 minutes
-    const fetchWeatherData = () => {
-      fetch("https://api.rainviewer.com/public/weather-maps.json")
-        .then(res => {
-          if (!res.ok) throw new Error(`RainViewer API error: ${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          // Get the most recent past radar data
-          if (data.radar?.past?.length > 0) {
-            const latestTimestamp = data.radar.past[data.radar.past.length - 1].time;
-            console.log("Latest weather timestamp:", latestTimestamp);
-            setWeatherTimestamp(latestTimestamp);
-          } else if (data.radar?.nowcast?.length > 0) {
-            // Fallback to nowcast if no past data available
-            const latestTimestamp = data.radar.nowcast[0].time;
-            console.log("Using nowcast timestamp:", latestTimestamp);
-            setWeatherTimestamp(latestTimestamp);
-          } else {
-            console.warn("No radar data available from RainViewer");
-          }
-        })
-        .catch(err => console.warn("Failed to fetch weather data from RainViewer:", err));
-    };
-
-    fetchWeatherData();
-    // Refresh weather data every 5 minutes
-    const weatherInterval = setInterval(fetchWeatherData, 5 * 60 * 1000);
-    
-    return () => clearInterval(weatherInterval);
-  }, []);
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
@@ -114,23 +81,6 @@ const FlightMap: React.FC = () => {
     });
     resizeObserver.observe(mapContainer.current);
 
-    map.current.on("style.load", () => {
-      if (showTraffic) {
-        addTrafficLayer();
-      }
-
-      if (showWeather) {
-        addWeatherLayer();
-      }
-
-      if (
-        selectedFlight &&
-        selectedFlight.history &&
-        selectedFlight.history.length > 1
-      ) {
-        drawFlightPath(selectedFlight);
-      }
-    });
 
     return () => {
       resizeObserver.disconnect();
@@ -141,30 +91,30 @@ const FlightMap: React.FC = () => {
   }, []);
 
   const addTrafficLayer = () => {
-    if (!map.current) return;
-    if (!map.current.getSource('mapbox-traffic')) {
-      map.current.addSource('mapbox-traffic', {
-        type: 'vector',
-        url: 'mapbox://mapbox.mapbox-traffic-v1'
-      });
-      map.current.addLayer({
-        'id': 'traffic-layer',
-        'type': 'line',
-        'source': 'mapbox-traffic',
-        'source-layer': 'traffic',
-        'paint': {
-          'line-width': 1.5,
-          'line-color': [
-            'interpolate',
-            ['linear'],
-            ['get', 'congestion'],
-            0, 'rgba(0, 255, 0, 0.5)',
-            50, 'rgba(255, 255, 0, 0.5)',
-            100, 'rgba(255, 0, 0, 0.5)'
-          ]
-        }
-      });
-    }
+    if (!map.current || map.current.getSource('mapbox-traffic')) return;
+    map.current.addSource('mapbox-traffic', {
+      type: 'vector',
+      url: 'mapbox://mapbox.mapbox-traffic-v1',
+    });
+    map.current.addLayer({
+      id: 'traffic-layer',
+      type: 'line',
+      source: 'mapbox-traffic',
+      'source-layer': 'traffic',
+      paint: {
+        'line-width': 2,
+        'line-opacity': 0.85,
+        'line-color': [
+          'match',
+          ['get', 'congestion'],
+          'low',      '#10b981',
+          'moderate', '#fbbf24',
+          'heavy',    '#f97316',
+          'severe',   '#f43f5e',
+          '#94a3b8',
+        ],
+      },
+    });
   };
 
   const removeTrafficLayer = () => {
@@ -174,54 +124,6 @@ const FlightMap: React.FC = () => {
     }
     if (map.current.getSource('mapbox-traffic')) {
       map.current.removeSource('mapbox-traffic');
-    }
-  };
-
-  const addWeatherLayer = () => {
-    if (!map.current) return;
-    
-    if (!weatherTimestamp) {
-      console.warn("Weather timestamp not available yet");
-      return;
-    }
-
-    if (!map.current.getSource('rainviewer-radar')) {
-      try {
-        map.current.addSource('rainviewer-radar', {
-          type: 'raster',
-          tiles: [
-            `https://tilecache.rainviewer.com/v2/radar/${weatherTimestamp}/256/{z}/{x}/{y}/2/1_1.png`
-          ],
-          tileSize: 256,
-          attribution: '© RainViewer'
-        });
-        
-        map.current.addLayer({
-          id: 'radar-layer',
-          type: 'raster',
-          source: 'rainviewer-radar',
-          minzoom: 0,
-          maxzoom: 22,
-          paint: {
-            'raster-opacity': 0.6,
-            'raster-fade-duration': 300
-          }
-        }, 'water');
-        
-        console.log("Weather layer added successfully");
-      } catch (error) {
-        console.error("Failed to add weather layer:", error);
-      }
-    }
-  };
-
-  const removeWeatherLayer = () => {
-    if (!map.current) return;
-    if (map.current.getLayer('radar-layer')) {
-      map.current.removeLayer('radar-layer');
-    }
-    if (map.current.getSource('rainviewer-radar')) {
-      map.current.removeSource('rainviewer-radar');
     }
   };
 
@@ -301,10 +203,16 @@ const FlightMap: React.FC = () => {
 
   useEffect(() => {
     if (!map.current) return;
+    map.current.once("style.load", () => {
+      if (showTrafficRef.current) addTrafficLayer();
+      const sf = selectedFlightRef.current;
+      if (sf?.history && sf.history.length > 1) drawFlightPath(sf);
+    });
     map.current.setStyle(`mapbox://styles/mapbox/${currentStyle}`);
   }, [currentStyle]);
 
   useEffect(() => {
+    showTrafficRef.current = showTraffic;
     if (!map.current) return;
     if (showTraffic) {
       addTrafficLayer();
@@ -315,20 +223,12 @@ const FlightMap: React.FC = () => {
 
   useEffect(() => {
     if (!map.current) return;
-    if (showWeather) {
-      addWeatherLayer();
-    } else {
-      removeWeatherLayer();
-    }
-  }, [showWeather, weatherTimestamp]);
-
-  useEffect(() => {
-    if (!map.current) return;
     // Keep base style aligned with global theme toggle.
     setCurrentStyle(theme === "dark" ? "dark-v11" : "streets-v12");
   }, [theme]);
 
   useEffect(() => {
+    selectedFlightRef.current = selectedFlight;
     if (!map.current) return;
 
     if (!selectedFlight) {
@@ -486,18 +386,18 @@ const FlightMap: React.FC = () => {
           <div className="absolute bottom-full right-0 mb-2 w-56 bg-(--card) border border-(--border) rounded-xl shadow-2xl p-2 space-y-1 animate-in fade-in slide-in-from-bottom-2">
             <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Base Style</div>
             <button
-              onClick={() => { setCurrentStyle(theme === "dark" ? "dark-v11" : "streets-v12"); setIsMenuOpen(false); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle.includes("light") || currentStyle.includes("dark") ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
-            >
-              <MapIcon className="h-4 w-4" />
-              <span>Default {theme === "dark" ? "Dark" : "Light"}</span>
-            </button>
-            <button
               onClick={() => { setCurrentStyle("streets-v12"); setIsMenuOpen(false); }}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "streets-v12" ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
             >
               <Navigation className="h-4 w-4" />
               <span>Streets</span>
+            </button>
+            <button
+              onClick={() => { setCurrentStyle("outdoors-v12"); setIsMenuOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "outdoors-v12" ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
+            >
+              <MapIcon className="h-4 w-4" />
+              <span>Outdoors</span>
             </button>
             <button
               onClick={() => { setCurrentStyle("satellite-v9"); setIsMenuOpen(false); }}
@@ -522,18 +422,6 @@ const FlightMap: React.FC = () => {
               </div>
             </button>
 
-            <button
-              onClick={() => setShowWeather(!showWeather)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showWeather ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
-            >
-              <div className="flex items-center gap-2">
-                <CloudRain className="h-4 w-4" />
-                <span>Weather Radar</span>
-              </div>
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${showWeather ? "bg-sky-500" : "bg-gray-400"}`}>
-                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showWeather ? "right-0.5" : "left-0.5"}`} />
-              </div>
-            </button>
           </div>
         )}
 
