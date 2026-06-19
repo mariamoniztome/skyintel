@@ -487,21 +487,21 @@ const FlightMap: React.FC = () => {
             <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Base Style</div>
             <button
               onClick={() => { setCurrentStyle(theme === "dark" ? "dark-v11" : "streets-v12"); setIsMenuOpen(false); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle.includes("light") || currentStyle.includes("dark") ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle.includes("light") || currentStyle.includes("dark") ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
             >
               <MapIcon className="h-4 w-4" />
               <span>Default {theme === "dark" ? "Dark" : "Light"}</span>
             </button>
             <button
               onClick={() => { setCurrentStyle("streets-v12"); setIsMenuOpen(false); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "streets-v12" ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "streets-v12" ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
             >
               <Navigation className="h-4 w-4" />
               <span>Streets</span>
             </button>
             <button
               onClick={() => { setCurrentStyle("satellite-v9"); setIsMenuOpen(false); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "satellite-v9" ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStyle === "satellite-v9" ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
             >
               <Satellite className="h-4 w-4" />
               <span>Satellite</span>
@@ -511,7 +511,7 @@ const FlightMap: React.FC = () => {
             <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-(--muted-foreground) font-bold">Overlays</div>
             <button
               onClick={() => setShowTraffic(!showTraffic)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showTraffic ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showTraffic ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
             >
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4" />
@@ -524,7 +524,7 @@ const FlightMap: React.FC = () => {
 
             <button
               onClick={() => setShowWeather(!showWeather)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showWeather ? "bg-(--muted) text-(--accent)" : "hover:bg-(--muted)"}`}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${showWeather ? "bg-(--muted) text-sky-500" : "hover:bg-(--muted)"}`}
             >
               <div className="flex items-center gap-2">
                 <CloudRain className="h-4 w-4" />
