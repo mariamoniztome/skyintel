@@ -101,6 +101,10 @@ const FlightMap: React.FC = () => {
       bounds: INITIAL_VIEW_BOUNDS,
       fitBoundsOptions: { padding: 24, maxZoom: 5.1 },
       maxBounds: EXPLORE_BOUNDS,
+      projection: "mercator" as any,
+      pitchWithRotate: false,
+      dragRotate: false,
+      touchPitch: false,
       trackResize: true,
     });
 
