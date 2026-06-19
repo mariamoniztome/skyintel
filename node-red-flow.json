@@ -20,25 +20,192 @@
         "disabled": false,
         "info": "Deletes stale flight records from the database every hour to keep data fresh."
     },
-
+    {
+        "id": "f1620da7153afdcc",
+        "type": "ui_tab",
+        "name": "Voice_Analyzer",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "1cc1d48419268168",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "a11d640a0f93b626",
+        "type": "ui_group",
+        "name": "Group 1",
+        "tab": "f1620da7153afdcc",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "serial-port-config",
+        "type": "serial-port",
+        "serialport": "/dev/ttyUSB0",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "60f37c240fa1c387",
+        "type": "global-config",
+        "env": [
+            {
+                "name": "VITE_MAPBOX_ACCESS_TOKEN",
+                "value": "",
+                "type": "str"
+            },
+            {
+                "name": "OPENWEATHER_API_KEY",
+                "value": "",
+                "type": "str"
+            },
+            {
+                "name": "OPENSKY_CLIENT_ID",
+                "value": "",
+                "type": "str"
+            },
+            {
+                "name": "OPENSKY_CLIENT_SECRET",
+                "value": "",
+                "type": "str"
+            }
+        ],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-node-serialport": "2.0.3"
+        }
+    },
     {
         "id": "n_inject",
         "type": "inject",
         "z": "tab_main",
         "name": "Every 30s",
-        "props": [{ "p": "payload" }],
-        "repeat": "30",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "60",
         "crontab": "",
         "once": true,
         "onceDelay": 0.1,
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 120,
-        "y": 160,
-        "wires": [["n_prepare_auth"]]
+        "x": 130,
+        "y": 80,
+        "wires": [
+            [
+                "0264043fd4e1d583"
+            ]
+        ]
     },
-
     {
         "id": "n_prepare_auth",
         "type": "function",
@@ -46,15 +213,19 @@
         "name": "Set OpenSky Auth",
         "func": "const clientId = env.get('OPENSKY_CLIENT_ID') || '';\nconst clientSecret = env.get('OPENSKY_CLIENT_SECRET') || '';\nif (clientId && clientSecret) {\n    const encoded = Buffer.from(clientId + ':' + clientSecret).toString('base64');\n    msg.headers = { 'Authorization': 'Basic ' + encoded };\n    node.status({ fill: 'green', shape: 'dot', text: 'Auth ready' });\n} else {\n    node.status({ fill: 'yellow', shape: 'ring', text: 'No auth (anonymous)' });\n}\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 240,
         "y": 160,
-        "wires": [["n_fetch_flights"]]
+        "wires": [
+            [
+                "n_fetch_flights"
+            ]
+        ]
     },
-
     {
         "id": "n_fetch_flights",
         "type": "http request",
@@ -72,9 +243,13 @@
         "headers": [],
         "x": 340,
         "y": 160,
-        "wires": [["n_process_flights"]]
+        "wires": [
+            [
+                "n_process_flights",
+                "2a8818419f10f373"
+            ]
+        ]
     },
-
     {
         "id": "n_process_flights",
         "type": "function",
@@ -88,9 +263,12 @@
         "libs": [],
         "x": 580,
         "y": 160,
-        "wires": [["n_fetch_weather"]]
+        "wires": [
+            [
+                "n_fetch_weather"
+            ]
+        ]
     },
-
     {
         "id": "n_fetch_weather",
         "type": "http request",
@@ -106,23 +284,31 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 820,
-        "y": 160,
-        "wires": [["n_merge_weather"]]
+        "x": 840,
+        "y": 220,
+        "wires": [
+            [
+                "n_merge_weather"
+            ]
+        ]
     },
-
     {
         "id": "n_catch_weather",
         "type": "catch",
         "z": "tab_main",
         "name": "Catch Weather Error",
-        "scope": ["n_fetch_weather"],
+        "scope": [
+            "n_fetch_weather"
+        ],
         "uncaught": false,
         "x": 820,
         "y": 60,
-        "wires": [["n_set_default_weather"]]
+        "wires": [
+            [
+                "n_set_default_weather"
+            ]
+        ]
     },
-
     {
         "id": "n_set_default_weather",
         "type": "function",
@@ -136,9 +322,12 @@
         "libs": [],
         "x": 1060,
         "y": 60,
-        "wires": [["n_merge_weather"]]
+        "wires": [
+            [
+                "n_merge_weather"
+            ]
+        ]
     },
-
     {
         "id": "n_merge_weather",
         "type": "function",
@@ -150,11 +339,14 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1100,
+        "x": 1110,
         "y": 160,
-        "wires": [["n_check_severity"]]
+        "wires": [
+            [
+                "n_check_severity"
+            ]
+        ]
     },
-
     {
         "id": "n_check_severity",
         "type": "switch",
@@ -163,17 +355,27 @@
         "property": "weatherSevere",
         "propertyType": "msg",
         "rules": [
-            { "t": "true" },
-            { "t": "else" }
+            {
+                "t": "true"
+            },
+            {
+                "t": "else"
+            }
         ],
         "checkall": "false",
         "repair": false,
         "outputs": 2,
         "x": 1340,
         "y": 160,
-        "wires": [["n_split_severe"], ["n_split_normal"]]
+        "wires": [
+            [
+                "n_split_severe"
+            ],
+            [
+                "n_split_normal"
+            ]
+        ]
     },
-
     {
         "id": "n_split_severe",
         "type": "split",
@@ -185,11 +387,15 @@
         "arraySpltType": "len",
         "stream": false,
         "addname": "",
+        "property": "payload",
         "x": 1340,
         "y": 280,
-        "wires": [["n_save_flight"]]
+        "wires": [
+            [
+                "n_save_flight"
+            ]
+        ]
     },
-
     {
         "id": "n_save_flight",
         "type": "function",
@@ -203,9 +409,12 @@
         "libs": [],
         "x": 1540,
         "y": 280,
-        "wires": [["n_post_severe_flight"]]
+        "wires": [
+            [
+                "n_post_severe_flight"
+            ]
+        ]
     },
-
     {
         "id": "n_post_severe_flight",
         "type": "http request",
@@ -221,69 +430,21 @@
         "authType": "",
         "senderr": false,
         "headers": [
-            { "keyType": "str", "keyValue": "Content-Type", "valueType": "str", "valueValue": "application/json" }
+            {
+                "keyType": "str",
+                "keyValue": "Content-Type",
+                "valueType": "str",
+                "valueValue": "application/json"
+            }
         ],
         "x": 1760,
         "y": 280,
-        "wires": [["n_build_alert"]]
+        "wires": [
+            [
+                "bebc18f053571f10"
+            ]
+        ]
     },
-
-    {
-        "id": "n_build_alert",
-        "type": "function",
-        "z": "tab_main",
-        "name": "Build Weather Alert",
-        "func": "const f = msg._flight;\nif (!f) { return null; }\n\nconst score = (f.weather.windSpeed > 40 ? 30 : 0) +\n              (f.weather.precipitation > 5 ? 25 : 0) +\n              (f.weather.clouds > 90 ? 15 : 0);\n\nmsg.payload = {\n    flightId: f.id,\n    callsign: f.callsign,\n    message: 'Severe weather for ' + (f.callsign || f.id) + ': ' +\n             f.weather.windSpeed + 'kt wind, ' +\n             f.weather.precipitation + 'mm/h precipitation, ' +\n             f.weather.clouds + '% cloud cover',\n    score: score\n};\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1980,
-        "y": 280,
-        "wires": [["n_post_alert"]]
-    },
-
-    {
-        "id": "n_post_alert",
-        "type": "http request",
-        "z": "tab_main",
-        "name": "POST Alert",
-        "method": "POST",
-        "ret": "txt",
-        "paytoqs": "ignore",
-        "url": "http://127.0.0.1:3000/api/alerts",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "authType": "",
-        "senderr": false,
-        "headers": [
-            { "keyType": "str", "keyValue": "Content-Type", "valueType": "str", "valueValue": "application/json" }
-        ],
-        "x": 2200,
-        "y": 280,
-        "wires": [["n_debug_alerts"]]
-    },
-
-    {
-        "id": "n_debug_alerts",
-        "type": "debug",
-        "z": "tab_main",
-        "name": "Alert Sent",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": true,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "payload",
-        "statusType": "auto",
-        "x": 2400,
-        "y": 280,
-        "wires": []
-    },
-
     {
         "id": "n_split_normal",
         "type": "split",
@@ -297,9 +458,12 @@
         "addname": "",
         "x": 1340,
         "y": 380,
-        "wires": [["n_post_flight"]]
+        "wires": [
+            [
+                "n_post_flight"
+            ]
+        ]
     },
-
     {
         "id": "n_post_flight",
         "type": "http request",
@@ -315,13 +479,21 @@
         "authType": "",
         "senderr": false,
         "headers": [
-            { "keyType": "str", "keyValue": "Content-Type", "valueType": "str", "valueValue": "application/json" }
+            {
+                "keyType": "str",
+                "keyValue": "Content-Type",
+                "valueType": "str",
+                "valueValue": "application/json"
+            }
         ],
         "x": 1560,
         "y": 380,
-        "wires": [["n_debug_response"]]
+        "wires": [
+            [
+                "n_debug_response"
+            ]
+        ]
     },
-
     {
         "id": "n_debug_response",
         "type": "debug",
@@ -338,7 +510,6 @@
         "y": 380,
         "wires": []
     },
-
     {
         "id": "n_catch_main",
         "type": "catch",
@@ -348,9 +519,12 @@
         "uncaught": true,
         "x": 340,
         "y": 480,
-        "wires": [["n_log_error"]]
+        "wires": [
+            [
+                "n_log_error"
+            ]
+        ]
     },
-
     {
         "id": "n_log_error",
         "type": "function",
@@ -364,9 +538,12 @@
         "libs": [],
         "x": 580,
         "y": 480,
-        "wires": [["n_debug_error"]]
+        "wires": [
+            [
+                "n_debug_error"
+            ]
+        ]
     },
-
     {
         "id": "n_debug_error",
         "type": "debug",
@@ -384,13 +561,74 @@
         "y": 480,
         "wires": []
     },
-
+    {
+        "id": "2a8818419f10f373",
+        "type": "debug",
+        "z": "tab_main",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "bebc18f053571f10",
+        "type": "debug",
+        "z": "tab_main",
+        "name": "Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1970,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "0264043fd4e1d583",
+        "type": "http request",
+        "z": "tab_main",
+        "name": "",
+        "method": "DELETE",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://localhost:3000/api/alerts",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 310,
+        "y": 80,
+        "wires": [
+            [
+                "n_prepare_auth"
+            ]
+        ]
+    },
     {
         "id": "h_inject",
         "type": "inject",
         "z": "tab_health",
         "name": "Every 5 min",
-        "props": [{ "p": "payload" }],
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
         "repeat": "300",
         "crontab": "",
         "once": true,
@@ -400,9 +638,12 @@
         "payloadType": "date",
         "x": 120,
         "y": 120,
-        "wires": [["h_check"]]
+        "wires": [
+            [
+                "h_check"
+            ]
+        ]
     },
-
     {
         "id": "h_check",
         "type": "http request",
@@ -420,9 +661,12 @@
         "headers": [],
         "x": 320,
         "y": 120,
-        "wires": [["h_switch"]]
+        "wires": [
+            [
+                "h_switch"
+            ]
+        ]
     },
-
     {
         "id": "h_switch",
         "type": "switch",
@@ -431,17 +675,29 @@
         "property": "statusCode",
         "propertyType": "msg",
         "rules": [
-            { "t": "eq", "v": "200", "vt": "num" },
-            { "t": "else" }
+            {
+                "t": "eq",
+                "v": "200",
+                "vt": "num"
+            },
+            {
+                "t": "else"
+            }
         ],
         "checkall": "false",
         "repair": false,
         "outputs": 2,
         "x": 520,
         "y": 120,
-        "wires": [["h_debug_ok"], ["h_debug_error"]]
+        "wires": [
+            [
+                "h_debug_ok"
+            ],
+            [
+                "h_debug_error"
+            ]
+        ]
     },
-
     {
         "id": "h_debug_ok",
         "type": "debug",
@@ -459,7 +715,6 @@
         "y": 80,
         "wires": []
     },
-
     {
         "id": "h_debug_error",
         "type": "debug",
@@ -477,7 +732,6 @@
         "y": 160,
         "wires": []
     },
-
     {
         "id": "h_catch",
         "type": "catch",
@@ -487,15 +741,22 @@
         "uncaught": false,
         "x": 320,
         "y": 220,
-        "wires": [["h_debug_error"]]
+        "wires": [
+            [
+                "h_debug_error"
+            ]
+        ]
     },
-
     {
         "id": "c_inject",
         "type": "inject",
         "z": "tab_cleanup",
         "name": "Every Hour",
-        "props": [{ "p": "payload" }],
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
         "repeat": "3600",
         "crontab": "",
         "once": false,
@@ -505,9 +766,12 @@
         "payloadType": "date",
         "x": 120,
         "y": 120,
-        "wires": [["c_request"]]
+        "wires": [
+            [
+                "c_request"
+            ]
+        ]
     },
-
     {
         "id": "c_request",
         "type": "http request",
@@ -525,9 +789,12 @@
         "headers": [],
         "x": 340,
         "y": 120,
-        "wires": [["c_result"]]
+        "wires": [
+            [
+                "c_result"
+            ]
+        ]
     },
-
     {
         "id": "c_result",
         "type": "function",
@@ -541,9 +808,12 @@
         "libs": [],
         "x": 580,
         "y": 120,
-        "wires": [["c_debug"]]
+        "wires": [
+            [
+                "c_debug"
+            ]
+        ]
     },
-
     {
         "id": "c_debug",
         "type": "debug",
@@ -561,7 +831,6 @@
         "y": 120,
         "wires": []
     },
-
     {
         "id": "c_catch",
         "type": "catch",
@@ -571,9 +840,12 @@
         "uncaught": false,
         "x": 340,
         "y": 220,
-        "wires": [["c_debug_error"]]
+        "wires": [
+            [
+                "c_debug_error"
+            ]
+        ]
     },
-
     {
         "id": "c_debug_error",
         "type": "debug",

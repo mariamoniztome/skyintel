@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/src/store/useStore";
 import StatsCards from "@/src/components/StatsCards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/src/components/ui/pagination";
 
 const AnalyticsTab: React.FC = () => {
   const { flights, theme } = useStore();
@@ -10,22 +11,67 @@ const AnalyticsTab: React.FC = () => {
   const [riskFilter, setRiskFilter] = useState<"all" | "low" | "medium" | "high">("all");
   const [minAltitude, setMinAltitude] = useState(0);
   const [maxAltitude, setMaxAltitude] = useState(50000);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
 
   const filteredFlights = useMemo(() => {
-    const query = search.trim().toLowerCase();
+      const query = search.trim().toLowerCase();
 
-    return flights.filter((f) => {
-      const matchesSearch =
-        query.length === 0 ||
-        f.id.toLowerCase().includes(query) ||
-        (f.callsign ?? "").toLowerCase().includes(query);
+      const safeMin = Math.min(minAltitude, maxAltitude);
+      const safeMax = Math.max(minAltitude, maxAltitude);
 
-      const matchesRisk = riskFilter === "all" ? true : f.riskLevel === riskFilter;
-      const matchesAltitude = f.altitude >= minAltitude && f.altitude <= maxAltitude;
+      return flights.filter((f) => {
+        const altitude = Math.max(0, f.altitude ?? 0);
 
-      return matchesSearch && matchesRisk && matchesAltitude;
-    });
-  }, [flights, search, riskFilter, minAltitude, maxAltitude]);
+        const matchesSearch =
+          query.length === 0 ||
+          f.id.toLowerCase().includes(query) ||
+          (f.callsign ?? "").toLowerCase().includes(query);
+
+        const matchesRisk =
+          riskFilter === "all"
+            ? true
+            : f.riskLevel === riskFilter;
+
+        const matchesAltitude =
+          altitude >= safeMin &&
+          altitude <= safeMax;
+
+        return (
+          matchesSearch &&
+          matchesRisk &&
+          matchesAltitude
+        );
+      });
+    }, [
+      flights,
+      search,
+      riskFilter,
+      minAltitude,
+      maxAltitude,
+    ]);
+
+  const totalPages = Math.ceil(
+  filteredFlights.length / PAGE_SIZE
+);
+
+  const paginatedFlights = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+
+    return filteredFlights.slice(
+      start,
+      start + PAGE_SIZE
+    );
+  }, [filteredFlights, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    search,
+    riskFilter,
+    minAltitude,
+    maxAltitude,
+  ]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -176,11 +222,11 @@ const AnalyticsTab: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {filteredFlights.map(f => (
+                {paginatedFlights.map(f => (
                   <tr key={f.id} className="hover:bg-[var(--muted)] transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-gray-600">{f.id}</td>
                     <td className="px-4 py-3 font-bold text-gray-600">{f.callsign}</td>
-                    <td className="px-4 py-3 text-gray-600">{f.altitude.toLocaleString()} ft</td>
+                    <td className="px-4 py-3 text-gray-600">{Math.max(0, f.altitude).toLocaleString()} ft</td>
                     <td className="px-4 py-3 text-gray-600">{f.speed} kts</td>
                     <td className="px-4 py-3 text-gray-600">
                       <div className="flex items-center gap-2 text-gray-600">
@@ -200,7 +246,7 @@ const AnalyticsTab: React.FC = () => {
                     </td>
                   </tr>
                 ))}
-                {filteredFlights.length === 0 && (
+                {paginatedFlights.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-sm text-[var(--muted-foreground)]">
                       No flights match the selected filters.
@@ -210,6 +256,58 @@ const AnalyticsTab: React.FC = () => {
               </tbody>
             </table>
           </div>
+          {totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage((p) => Math.max(1, p - 1));
+                      }}
+                    />
+                  </PaginationItem>
+
+                  {Array.from(
+                    { length: totalPages },
+                    (_, i) => i + 1
+                  )
+                    .slice(
+                      Math.max(0, page - 3),
+                      Math.min(totalPages, page + 2)
+                    )
+                    .map((pageNumber) => (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          href="#"
+                          isActive={pageNumber === page}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPage(pageNumber);
+                          }}
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage((p) =>
+                          Math.min(totalPages, p + 1)
+                        );
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

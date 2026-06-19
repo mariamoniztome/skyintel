@@ -59,7 +59,13 @@ router.get("/health", (req, res) => {
 
 // GET /api/alerts
 router.get("/alerts", (req, res) => {
-  const alerts = db.prepare("SELECT * FROM alerts ORDER BY timestamp DESC LIMIT 50").all();
+  const alerts = db.prepare(`
+    SELECT *
+    FROM alerts
+    ORDER BY timestamp DESC
+    LIMIT 50
+  `).all();
+
   res.json(alerts);
 });
 
@@ -111,8 +117,16 @@ router.post("/ingest/flights", (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, weather.windSpeed, weather.gust, weather.temperature, weather.pressure, weather.humidity, weather.clouds, weather.precipitation, weather.condition);
 
+    console.log(
+      callsign,
+      weather.windSpeed,
+      weather.gust,
+      weather.clouds,
+      altitude,
+      speed
+    );
     // Calculate Turbulence
-    const score = calculateTurbulence(weather, altitude);
+    const score = calculateTurbulence(weather, altitude, speed);
     const riskLevel = score <= 30 ? "low" : score <= 60 ? "medium" : "high";
 
     // Insert Turbulence History
@@ -122,7 +136,7 @@ router.post("/ingest/flights", (req, res) => {
     `).run(id, score, riskLevel, altitude, lat, lon);
 
     // Generate Alert if high risk
-    if (score >= 70) {
+    if (score >= 61) {
       db.prepare(`
         INSERT INTO alerts (flight_id, message, score)
         VALUES (?, ?, ?)
@@ -139,6 +153,11 @@ router.delete("/flights/stale", (req, res) => {
     DELETE FROM flights WHERE last_updated < datetime('now', '-30 minutes')
   `).run();
   res.json({ status: "ok", deleted: result.changes });
+});
+
+router.delete("/alerts", (req, res) => {
+  db.prepare("DELETE FROM alerts").run();
+  res.json({ status: "ok" });
 });
 
 export default router;

@@ -35,7 +35,7 @@ export async function fetchOpenSkyData() {
     const response = await axios.get(`${OPENSKY_URL}?lamin=30&lomin=-32&lamax=45&lomax=-1`, {
       timeout: 30000
     });
-
+    console.log("OpenSky response received");
     const states = response.data.states;
     if (!states || !Array.isArray(states)) {
       console.log("No flights received from OpenSky for Portugal/Madeira/Azores region.");
@@ -49,7 +49,13 @@ export async function fetchOpenSkyData() {
       return isInTargetRegions(lat, lon);
     });
 
-    console.log(`Received ${states.length} flights from OpenSky. Keeping ${filteredStates.length} in target regions.`);
+    db.prepare("DELETE FROM alerts").run();
+
+    const count = db.prepare(
+      "SELECT COUNT(*) as total FROM alerts"
+    ).get();
+
+    console.log("Alerts after clear:", count);
 
     for (const s of filteredStates) {
       const id = s[0]; // icao24
@@ -76,6 +82,7 @@ export async function fetchOpenSkyData() {
 
 function processFlight(id: string, callsign: string, lat: number, lon: number, altitude: number, speed: number, heading: number) {
   // Update or Insert Flight
+  console.log("PROCESS FLIGHT RUNNING");
   db.prepare(`
     INSERT INTO flights (id, callsign, lat, lon, altitude, speed, heading, last_updated)
     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -106,7 +113,7 @@ function processFlight(id: string, callsign: string, lat: number, lon: number, a
   `).run(id, weather.windSpeed, weather.gust, weather.temperature, weather.pressure, weather.humidity, weather.clouds, weather.precipitation, weather.condition);
 
   // Calculate Turbulence
-  const score = calculateTurbulence(weather, altitude);
+  const score = calculateTurbulence(weather, altitude, speed);
   const riskLevel = score <= 30 ? "low" : score <= 60 ? "medium" : "high";
 
   // Insert Turbulence History
@@ -115,8 +122,10 @@ function processFlight(id: string, callsign: string, lat: number, lon: number, a
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(id, score, riskLevel, altitude, lat, lon);
 
+  console.log("Alert score:", score, callsign);
   // Generate Alert if high risk
-  if (score >= 70) {
+  if (score >= 61) {
+    console.log("INSERTING ALERT", score, callsign);
     db.prepare(`
       INSERT INTO alerts (flight_id, message, score)
       VALUES (?, ?, ?)

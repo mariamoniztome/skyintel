@@ -1,25 +1,27 @@
-export function calculateTurbulence(weather: any, altitude: number): number {
+export function calculateTurbulence(
+  weather: any,
+  altitude: number,
+  speed: number = 0
+): number {
   let score = 0;
 
-  // Wind speed contribution (up to 30 points)
-  score += Math.min((weather.windSpeed || 0) * 1.5, 30);
+  score += Math.min((weather.windSpeed || 0) * 1.0, 20);
 
-  // Gust contribution (up to 20 points)
-  score += Math.min((weather.gust || 0) * 2, 20);
+  score += Math.min((weather.gust || 0) * 1.2, 15);
 
-  // Pressure instability (mocked as variance from standard 1013.25 hPa)
-  const pressureDiff = Math.abs((weather.pressure || 1013.25) - 1013.25);
-  score += Math.min(pressureDiff * 0.5, 15);
+  const pressureDiff = Math.abs(
+    (weather.pressure || 1013.25) - 1013.25
+  );
+  score += Math.min(pressureDiff * 0.2, 8);
 
-  // Clouds and Precipitation (up to 25 points)
   score += Math.min((weather.clouds || 0) * 0.1, 10);
+
   score += Math.min((weather.precipitation || 0) * 5, 15);
 
-  // Altitude variation factor (mocked)
-  // Higher altitude sometimes means smoother air, but jet streams can be turbulent
-  if (altitude > 30000) {
-    score += 5; // Jet stream risk
-  }
+  if (altitude > 25000) score += 3;
+  if (altitude > 35000) score += 3;
+
+  score += Math.min(speed / 80, 8);
 
   return Math.min(Math.round(score), 100);
 }
